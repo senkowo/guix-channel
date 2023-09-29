@@ -18,7 +18,7 @@
 	    (method git-fetch)
             (sha256
              (base32
-              "1h0jqxn5rwm44w63kg56b3lsw1nr44lg966x0r62mzxy0mwd354g"))))
+              "0aac5xy94cdi9wzh7ljns6scpqjrm1lgphmc9fch0bx57x8j6xlm"))))
    (build-system cmake-build-system)
    (synopsis "Tray all application")
    (description "Tray all application")
