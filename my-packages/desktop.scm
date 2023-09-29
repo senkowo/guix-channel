@@ -16,7 +16,6 @@
             (uri (git-reference
 		  (url "https://github.com/mbt/alltray")
 		  (commit version)))
-	    (method git-fetch)
             (sha256
              (base32
               "1h0jqxn5rwm44w63kg56b3lsw1nr44lg966x0r62mzxy0mwd354g"))))
