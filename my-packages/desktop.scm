@@ -12,7 +12,7 @@
    (name "alltray")
    (version "0.70")
    (source (origin
-            (method url-fetch)
+            (method git-fetch)
             (uri (git-reference
 		  (url "https://github.com/mbt/alltray")
 		  (commit version)))
