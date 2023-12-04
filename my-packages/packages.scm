@@ -2,7 +2,9 @@
   #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix git-download)
-  #:use-module (guix build-system cmake))
+  #:use-module (guix build-system cmake)
+  #:use-module (gnu packages gcc)
+  #:use-module (srfi srfi-1)) ; for alist-delete
 
 ;; reference file:
 ;; https://github.com/daviwil/channel-x/blob/master/channel-x/packages/video.scm
@@ -11,7 +13,7 @@
   (package
    (inherit gcc)
    (name "gcc-unhidden")
-   (properties (alist-delete 'hidden? (package-properties gcc)))))
+   (properties (alist-delete! 'hidden? (package-properties gcc)))))
 
 (define-public alltray
   (package
