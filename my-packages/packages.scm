@@ -9,11 +9,30 @@
 ;; reference file:
 ;; https://github.com/daviwil/channel-x/blob/master/channel-x/packages/video.scm
 
+;; note: make sure to git commit before updating channels
+
+;; ask guix irc: i want to access gcc's hidden libraries, so I've created a custom package
+;; definition that inherits gcc, then runs (alist-delete 'hidden? (package-properties gcc))
+;; to install gcc with the hidden libs included. This workaround requires having to compile
+;; gcc and it's not a great solution. I'm pretty inexperienced when it comes to hacking guix,
+;; but is there a better way to write a personal package definiton, whose sole purpose is to
+;; get the hidden libs in gcc? I know that
+;; guix shell  -e $'(list (@@ (gnu packages gcc) gcc) "lib")'
+;; does the job in a shell, but i want to install the libs in a custom profile.
+;; maybe a package definiton that returns only the gcc libs, so essentially "gcc:lib" (this
+;; output is no longer available in the package repos)
+;; relevant discussions: https://issues.guix.gnu.org/63267
+
 (define-public gcc-unhidden
   (package
    (inherit gcc)
    (name "gcc-unhidden")
-   (properties (alist-delete! 'hidden? (package-properties gcc)))))
+   (properties (alist-delete 'hidden? (package-properties gcc)))))
+
+(define-public gcc-lib
+  (package
+   (inherit gcc:lib)
+   (name "gcc-lib")))
 
 (define-public alltray
   (package
