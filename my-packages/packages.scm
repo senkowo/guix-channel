@@ -31,7 +31,7 @@
 
 (define-public gcc-lib
   (package
-   (inherit gcc:lib)
+   (inherit gcc "lib")
    (name "gcc-lib")))
 
 (define-public alltray
