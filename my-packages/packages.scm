@@ -29,10 +29,10 @@
    (name "gcc-unhidden")
    (properties (alist-delete 'hidden? (package-properties gcc)))))
 
-(define-public gcc-lib
-  (package
-   (inherit gcc "lib")
-   (name "gcc-lib")))
+;; (define-public gcc-lib
+;;   (package
+;;    (inherit gcc "lib")
+;;    (name "gcc-lib")))
 
 (define-public alltray
   (package
