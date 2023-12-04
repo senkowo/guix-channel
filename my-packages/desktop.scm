@@ -7,6 +7,12 @@
 ;; reference file:
 ;; https://github.com/daviwil/channel-x/blob/master/channel-x/packages/video.scm
 
+(define-public gcc-unhidden
+  (package
+   (inherit gcc)
+   (name "gcc-unhidden")
+   (properties (alist-delete 'hidden? (package-properties gcc)))))
+
 (define-public alltray
   (package
    (name "alltray")
