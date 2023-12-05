@@ -27,12 +27,15 @@
   (package
    (inherit gcc)
    (name "gcc-unhidden")
-   (properties (alist-delete 'hidden? (package-properties gcc)))))
+   ;; (arguments
+   ;;  (list #:configure-flags #~'("--disable-werror")))
+   (properties (alist-delete 'hidden? (package-properties gcc)))
+   ))
 
-;; (define-public gcc-lib
+;; (define-public libstdc++
 ;;   (package
-;;    (inherit gcc "lib")
-;;    (name "gcc-lib")))
+;;    (inherit gcc)
+;;    (name "libstdc++")))
 
 (define-public alltray
   (package
