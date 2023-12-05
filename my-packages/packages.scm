@@ -33,10 +33,10 @@
    (properties (alist-delete 'hidden? (package-properties gcc)))
    ))
 
-(define-public my-libstdc++
+(define-public my-libstdcxx
   (package
    (inherit (make-libstdc++ gcc))
-   (name "my-libstdc++")))
+   (name "my-libstdcxx")))
 
 (define-public alltray
   (package
