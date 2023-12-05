@@ -23,12 +23,20 @@
 ;; output is no longer available in the package repos)
 ;; relevant discussions: https://issues.guix.gnu.org/63267
 
+;; "inputs"?
+;; https://unix.stackexchange.com/questions/600311/how-to-run-a-dynamically-compiled-32-bit-x86-binary-on-a-amd64-bit-guix-system
+
 (define-public gcc-unhidden
   (package
    (inherit gcc)
    (name "gcc-unhidden")
    (properties (alist-delete 'hidden? (package-properties gcc)))
    ))
+
+(define-public my-libstdc++
+  (package
+   (inherit (make-libstdc++ gcc))
+   (name "my-libstdc++")))
 
 (define-public alltray
   (package
