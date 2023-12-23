@@ -26,17 +26,13 @@
 ;; "inputs"?
 ;; https://unix.stackexchange.com/questions/600311/how-to-run-a-dynamically-compiled-32-bit-x86-binary-on-a-amd64-bit-guix-system
 
+;; run "gcc-unhidden:lib" to get the libs
 (define-public gcc-unhidden
   (package
    (inherit gcc)
    (name "gcc-unhidden")
    (properties (alist-delete 'hidden? (package-properties gcc)))
    ))
-
-(define-public my-libstdcxx
-  (package
-   (inherit (make-libstdc++ gcc))
-   (name "my-libstdcxx")))
 
 (define-public alltray
   (package
