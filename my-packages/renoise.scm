@@ -53,7 +53,7 @@
 
 
 (define-public renoise-source-path
-  "file:///home/yui/Music/prod/misc/test/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz" ; untarred
+  "file:///home/yui/Music/prod/misc/test/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz"
   )
 
 ;; da real renoise package
@@ -62,58 +62,43 @@
    (name "renoise")
    (version "3.4.3")
    (source
-    (let ((tarball (with-store store
-			       (download-to-store store renoise-source-path))))
-      (origin
-       (method url-fetch)
-       (uri renoise-source-path)
-       (sha256
-	(base32 (bytevector->nix-base32-string
-		 (file-hash* tarball #:recursive? #false))))))
-    ;;  ;; (method url-fetch/tarbomb)
-    ;;  ;; (uri (string-append "https://files.renoise.com/demo/Renoise_"
-    ;;  ;; 			 (string-replace-substring version "." "_")
-    ;;  ;; 			 "_Demo_Linux_"
-    ;;  ;; 			 (match (%current-system)
-    ;;  ;; 			   ("x86_64-linux" "x86_64"))
-    ;;  ;; 			 ".tar.gz"))
-    ;;  (method uri-fetch)
-    ;;  (uri renoise-source-path)
-    ;;  (sha256
-    ;;   (base32
-    ;;    (match (%current-system)
-    ;; 	 ("x86_64-linux" "0nkyidxyp8r7jgdjld6f1bsk59927rw0n1n4j492ncwblwszmp0j")))))
-    
-    ;; ;; If a local path to the renoise sources (renoise-source-path) is undefined,
-    ;; ;; fetch the demo tarbomb from the uri. If else, the file-path defined at
-    ;; ;; renoise-source-path will be used (necessary for the full version).
-    ;; (cond ((not renoise-source-path)
-    ;; 	   ;; e.g. https://files.renoise.com/demo/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz
-    ;; 	   (let* ((def-uri (string-append
-    ;; 			    "https://files.renoise.com/demo/Renoise_"
-    ;; 			    (string-replace-substring version "." "_")
-    ;; 			    "_Demo_Linux_"
-    ;; 			    (match (%current-system)
-    ;; 			      ("x86_64-linux" "x86_64")
-    ;; 			      ;; ("aarch64-linux" "arm64") ; check if the install scripts are same 
-    ;; 			      ;; ("armhf-linux" "armhf")
-    ;; 			      )
-    ;; 			    ".tar.gz")))
-    ;; 	     (origin
-    ;; 	      (method url-fetch/tarbomb)
-    ;; 	      (uri def-uri))
-    ;; 	     ;; hashes if installing from uri
-    ;; 	     (sha256
-    ;; 	      (base32
-    ;; 	       (match (%current-system)
-    ;; 		 ("x86_64-linux" "1hd7fbk0px45fxhqa7nqcnij8ls2fhpjp60v840vy2zqs9fkcr52")
-    ;; 		 ;; ("aarch64-linux" "0zpkaiwwxn8yh3s1d22qswshbgaxx5d8iy17hb3w256zgb722yjw")
-    ;; 		 ;; ("armhf-linux" "18174b1lgsk73gxhala471ppzbrpa1cs953b5par998yqgh74znk")
-    ;; 		 ))))
-    ;; 	   (t
-    ;; 	    ;; no need to check hashes, because each paid renoise tarbomb has a unique hash
-    ;; 	    (file-name renoise-source-path))))
-    )
+    (cond (renoise-source-path
+	   ;; If a local path to the renoise tar file is specified, it will do the
+	   ;; following. 
+	   ;; - Note that this adds the tar file to the guix store, so it can be
+	   ;; processed.
+	   ;; - Also Note that each paid renoise version has a unique hash, so it
+	   ;; cannot be predefined.
+	   (let ((tarball (with-store store
+				      (download-to-store store renoise-source-path))))
+	     (origin
+	      (method url-fetch)
+	      (uri renoise-source-path)
+	      (sha256
+	       (base32 (bytevector->nix-base32-string
+			(file-hash* tarball #:recursive? #false)))))))
+	  (t
+	   ;; If renoise-source-path is not specified, download the demo ver from site:
+	   ;; (e.g. https://files.renoise.com/demo/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz)
+	   (let ((def-uri
+		   (string-append
+		    "https://files.renoise.com/demo/Renoise_"
+		    (string-replace-substring version "." "_")
+		    "_Demo_Linux_"
+		    (match (%current-system)
+		      ("x86_64-linux" "x86_64")
+		      ("aarch64-linux" "arm64")
+		      ("armhf-linux" "armhf"))
+		    ".tar.gz")))
+	     (origin
+	      (method url-fetch/tarbomb)
+	      (uri def-uri)
+	      (sha256
+	       (base32
+		(match (%current-system) ; i might not keep all these up to date, perchance.
+		  ("x86_64-linux" "1hd7fbk0px45fxhqa7nqcnij8ls2fhpjp60v840vy2zqs9fkcr52")
+		  ("aarch64-linux" "0zpkaiwwxn8yh3s1d22qswshbgaxx5d8iy17hb3w256zgb722yjw")
+		  ("armhf-linux" "18174b1lgsk73gxhala471ppzbrpa1cs953b5par998yqgh74znk")))))))))
    (build-system binary-build-system)
    (arguments
     (list #:strip-binaries? #f ; what does this do?
@@ -160,11 +145,11 @@
 			     (string-append all
 					    indent "exit 0\n")))
 
-			   ;; for DEBUG
-			   ;; (invoke "cat" "./install.sh")
+			   ;; (invoke "cat" "./install.sh") ; debug
 
 			   (format #T "> Running install script...~%")
 			   (invoke "sh" "./install.sh")
+			   (format #T "> Finished running install script...~%")
 
 			   ;; (invoke "ls" "-al" "/sys")
 			   ;; (invoke "ls" "-al" "/proc")
@@ -263,15 +248,15 @@
    
    (native-inputs
     (list
-     grep
+     ;; grep
      ;; which
-     xdg-utils))
+     ;; xdg-utils
+     ))
    (inputs
-    (list
-     alsa-lib
-     `(,gcc "lib")
-     libx11
-     libxext))
+    (list alsa-lib
+	  `(,gcc "lib")
+	  libx11
+	  libxext))
    (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
    
    (synopsis "Modern tracker-based DAW")
