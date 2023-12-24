@@ -20,6 +20,7 @@
   #:use-module (ice-9 match) ; match
   #:use-module (ice-9 regex) ; match syntax
   #:use-module (srfi srfi-1) ; 'hidden?
+  #:use-module (ice-9 string-fun) ; string-replace-substring
   ;; other
   #:use-module (guix licenses)
   #:use-module ((nonguix licenses) #:prefix license:)
@@ -46,6 +47,8 @@
 ;; alternative method: use "substitute* file ((regexp match-var…) body…) …" to edit
 ;; installation file, remove sudo perms, change output path dirs.
 
+;; skip CPU frequency scaling bc it wont work!!!
+
 
 
 
@@ -59,21 +62,14 @@
    (name "renoise")
    (version "3.4.3")
    (source
-    ;; (origin
-    ;;  (file-name
-    ;;   renoise-source-path))
-    
     (let ((tarball (with-store store
 			       (download-to-store store renoise-source-path))))
-      
       (origin
        (method url-fetch)
        (uri renoise-source-path)
        (sha256
-	(base32 (bytevector->nix-base32-string (file-hash* tarball #:recursive? #false))))))
-
-    ;; (origin
-     
+	(base32 (bytevector->nix-base32-string
+		 (file-hash* tarball #:recursive? #false))))))
     ;;  ;; (method url-fetch/tarbomb)
     ;;  ;; (uri (string-append "https://files.renoise.com/demo/Renoise_"
     ;;  ;; 			 (string-replace-substring version "." "_")
@@ -129,130 +125,136 @@
 		      (replace
 		       'install
 		       (lambda* (#:key outputs inputs #:allow-other-keys)
-			 (format #t "DEBUG: before setting variables...~%")
 			 (let* ((target (string-append #$output))
 				(bin (string-append #$output "/bin"))
 				(share (string-append #$output "/share"))
-				(resources (string-append share "/renoise-" #$version)) ; problem
-				;; (default-target (string-append target "/usr/local"))
-				;; (default-bin (string-append default-target "/bin"))
-				;; (default-share (string-append default-target "/share"))
-				;; (default-resources (string-append default-share "/renoise-"
-				;; 				  #$version))
-				)
-			   (format #t "DEBUG: AFTERRRR setting variables...woooo!!!~%")
+				(resources (string-append share "/renoise-" #$version)))
 			   
 			   (setenv "HOME" "/tmp")
 			   (setenv "XDG_DATA_HOME" share)
 			   
 			   
 			   ;; ------- Method 1 --------
+
+			   (format #T "> Replacing variables in install script...~%")
+			   (substitute*
+			    "./install.sh"
+			    ;; Below replaces the default target (e.g. /usr/local/) to
+			    ;; the correct one (#$output).
+			    (("(BINARY_PATH=).*" _ var)
+			     (string-append var bin "\n"))
+			    (("(SYSTEM_LOCAL_SHARE=).*" _ var)
+			     (string-append var share "\n"))
+			    (("(RESOURCES_PATH=).*" _ var)
+			     (string-append var resources "\n"))
+			    ;; Turn "if [ `id -u` -ne 0 ]; then" into the following:
+			    ;; "if [ `id -u` -ne 0 ] && [ `id -u` -ne 999 ]; then"
+			    ;; This prevents the script from aborting with perm error.
+			    (("(if.*)(\\[.*id -u.*\\])(;.*)" _ iff brackets ending)
+			     (string-append iff brackets
+					    " && [ `id -u` -ne 999 ]" ending "\n"))
+			    ;; By default, a successful installation will exit with an 
+			    ;; exit code of 1, which will cause the package installation
+			    ;; to fail. This adds an "exit 0" before that's called.
+			    (("(.*)echo.*Installation.*SUCCEEDED.*" all indent)
+			     (string-append all
+					    indent "exit 0\n")))
+
+			   ;; for DEBUG
+			   ;; (invoke "cat" "./install.sh")
+
+			   (format #T "> Running install script...~%")
+			   (invoke "sh" "./install.sh")
+
+			   ;; (invoke "ls" "-al" "/sys")
+			   ;; (invoke "ls" "-al" "/proc")
+			   ;; (invoke "grep" "-E" "'performance'"
+			   ;; 	   "/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor"
+			   ;; 	   ">" "/dev/null")
 			   
-			   ;; (invoke "sh" "./install.sh")
-
-			   ;; (mkdir-p bin)
-			   ;; (mkdir-p share)
-
-			   ;; ;; copy over /usr/local/bin/renoise to /bin
-			   ;; (delete-file (string-append default-bin "/renoise")) ; delete symlink
-			   ;; (copy-file (string-append default-bin "/renoise-" version)
-			   ;; 	      bin)
-			   ;; (symlink (string-append bin "renoise-" version)
-			   ;; 	    (string-append bin "renoise"))
-
-			   ;; ;; copy over /usr/local/share/renoise-# to /share
-			   ;; (copy-recursively default-resources share)
-			   ;; ;; install the man pages ourselves
-			   ;; (invoke (string-append 
-			   ;; 	    "install -D -m644 ./Installer/renoise.1.gz "
-			   ;; 	    share "/man/man1/renoise.1.gz && "
-			   ;; 	    "install -D -m644 ./Installer/renoise-pattern-effects.5.gz "
-			   ;; 	    share "/man/man5/renoise-pattern-effects.5.gz"))
-
-			   ;; ;; delete the stuff in the default target
-			   ;; (delete-files-recursively (string-append target "/usr")) ; no more /usr?
+			   ;; (invoke "ls" "-al" target)
 			   
-			   
+			   ;; (error "made-it!!")
 			   
 			   ;; ---------- Method 2 -----------
 
-			   ;; Fixing file permissions...
-			   (format #T "> Fixing file permissions...~%")
+			   ;; ;; Fixing file permissions...
+			   ;; (format #T "> Fixing file permissions...~%")
 			   
-			   ;; wrapper around find-files (similar to "$ find A -type B
-			   ;; -name C -exec chmod D {} \;")
-			   (define (find-and-chmod path type name-regex ch-perm)
-			     (for-each (lambda (f)
-					 (chmod f ch-perm))
-				       (find-files
-					path 
-					(lambda (file stat) ; checks type and name-regex:
-					  (and
-					   (cond ((equal? "d" type)
-						  (directory-exists? file))
-						 ((equal? "f" type)
-						  (not (directory-exists? file)))
-						 (t (error "invalid find-command type")))
-					   ((file-name-predicate name-regex) file stat)))
-					#:directories? #t
-					#:fail-on-error? #t)))
+			   ;; ;; wrapper around find-files (similar to "$ find A -type B
+			   ;; ;; -name C -exec chmod D {} \;")
+			   ;; (define (find-and-chmod path type name-regex ch-perm)
+			   ;;   (for-each (lambda (f)
+			   ;; 		 (chmod f ch-perm))
+			   ;; 	       (find-files
+			   ;; 		path 
+			   ;; 		(lambda (file stat) ; checks type and name-regex:
+			   ;; 		  (and
+			   ;; 		   (cond ((equal? "d" type)
+			   ;; 			  (directory-exists? file))
+			   ;; 			 ((equal? "f" type)
+			   ;; 			  (not (directory-exists? file)))
+			   ;; 			 (t (error "invalid find-command type")))
+			   ;; 		   ((file-name-predicate name-regex) file stat)))
+			   ;; 		#:directories? #t
+			   ;; 		#:fail-on-error? #t)))
 			   
-			   (find-and-chmod "." "d" ".*" '#o755)
-			   (find-and-chmod "." "f" ".*" '#o644)
-			   (find-and-chmod "." "f" ".*sh" '#o755)
-			   (find-and-chmod "./Installer/xdg-utils" "f" "xdg-.*" '#o755)
-			   (chmod "./renoise" '#o755)
-			   (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
+			   ;; (find-and-chmod "." "d" ".*" '#o755)
+			   ;; (find-and-chmod "." "f" ".*" '#o644)
+			   ;; (find-and-chmod "." "f" ".*sh" '#o755)
+			   ;; (find-and-chmod "./Installer/xdg-utils" "f" "xdg-.*" '#o755)
+			   ;; (chmod "./renoise" '#o755)
+			   ;; (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
 			   
-			   ;; Installing shared resources...
-			   (format #T "> Installing shared resources...~%")
-			   (mkdir-p resources) ; vvv does not copy the src dir itself
-			   (copy-recursively "./Resources" resources)
-			   (install-file "./install.sh" resources)
-			   (install-file "./uninstall.sh" resources)
-			   (copy-recursively "./Installer"
-					     (string-append resources "/Installer"))
+			   ;; ;; Installing shared resources...
+			   ;; (format #T "> Installing shared resources...~%")
+			   ;; (mkdir-p resources) ; vvv does not copy the src dir itself
+			   ;; (copy-recursively "./Resources" resources)
+			   ;; (install-file "./install.sh" resources)
+			   ;; (install-file "./uninstall.sh" resources)
+			   ;; (copy-recursively "./Installer"
+			   ;; 		     (string-append resources "/Installer"))
 			   
-			   ;; Installing the executable...
-			   (format #T "> Installing the executable...~%")
-			   (mkdir-p bin)
-			   (copy-file "./renoise" ; dont install-file, want a different name
-				      (string-append bin "/renoise-" #$version))
+			   ;; ;; Installing the executable...
+			   ;; (format #T "> Installing the executable...~%")
+			   ;; (mkdir-p bin)
+			   ;; (copy-file "./renoise" ; dont install-file, want a different name
+			   ;; 	      (string-append bin "/renoise-" #$version))
 			   
-			   ;; Linking the executable...
-			   (format #T "> Linking the executable...~%")
-			   (symlink (string-append bin "/renoise-" #$version)
-				    (string-append bin "/renoise"))
+			   ;; ;; Linking the executable...
+			   ;; (format #T "> Linking the executable...~%")
+			   ;; (symlink (string-append bin "/renoise-" #$version)
+			   ;; 	    (string-append bin "/renoise"))
 
-			   ;; Installing the man file...
-			   (format #T "> Installing the man file...~%")
-			   (install-file "./Installer/renoise.1.gz"
-					 (string-append share "/man/man1"
-							"/renoise.1.gz"))
-			   (install-file "./Installer/renoise-pattern-effects.5.gz"
-					 (string-append share "/man/man5"
-							"/renoise-pattern-effects.5.gz"))
+			   ;; ;; Installing the man file...
+			   ;; (format #T "> Installing the man file...~%")
+			   ;; (install-file "./Installer/renoise.1.gz"
+			   ;; 		 (string-append share "/man/man1"
+			   ;; 				"/renoise.1.gz"))
+			   ;; (install-file "./Installer/renoise-pattern-effects.5.gz"
+			   ;; 		 (string-append share "/man/man5"
+			   ;; 				"/renoise-pattern-effects.5.gz"))
 			   
-			   ;; Registering MIME types... ; what's this do? location?
-			   (format #T "> Registering MIME types...~%")
-			   (invoke "xdg-mime" "install" "--novendor"
-				   (string-append resources "/Installer/renoise.xml"))
+			   ;; ;; Registering MIME types... ; what's this do? location?
+			   ;; (format #T "> Registering MIME types...~%")
+			   ;; (invoke "xdg-mime" "install" "--novendor"
+			   ;; 	   (string-append resources "/Installer/renoise.xml"))
 
-			   ;; Installing icons...
-			   (format #T "> Installing icons...~%")
-			   (for-each (lambda (res) 
-				       (install-file
-					(string-append resources "/Installer/renoise-" res
-						       ".png")
-					(string-append share "/icons/hicolor/"
-						       res "x" res
-						       "/apps/renoise.png")))
-				     '("48" "64" "128"))
+			   ;; ;; Installing icons...
+			   ;; (format #T "> Installing icons...~%")
+			   ;; (for-each (lambda (res) 
+			   ;; 	       (install-file
+			   ;; 		(string-append resources "/Installer/renoise-" res
+			   ;; 			       ".png")
+			   ;; 		(string-append share "/icons/hicolor/"
+			   ;; 			       res "x" res
+			   ;; 			       "/apps/renoise.png")))
+			   ;; 	     '("48" "64" "128"))
 			   
-			   ;; Installing desktop-menu shortcuts...
-			   (format #T "> Installing desktop-menu shortcuts...~%")
-			   (invoke "xdg-desktop-menu" "install" "--novendor"
-				   (string-append resources "/Installer/renoise.desktop"))
+			   ;; ;; Installing desktop-menu shortcuts...
+			   ;; (format #T "> Installing desktop-menu shortcuts...~%")
+			   ;; (invoke "xdg-desktop-menu" "install" "--novendor"
+			   ;; 	   (string-append resources "/Installer/renoise.desktop"))
 			   
 			   ;; ;; Do checks here?
 			   
@@ -261,20 +263,16 @@
    
    (native-inputs
     (list
-     which
-     util-linux ; chmod
+     grep
+     ;; which
      xdg-utils))
    (inputs
     (list
      alsa-lib
      `(,gcc "lib")
      libx11
-     libxext
-     ;; wdl
-     ))
-   (supported-systems '("x86_64-linux"
-			;; "aarch64-linux" "armhf-linux"
-			))
+     libxext))
+   (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
    
    (synopsis "Modern tracker-based DAW")
    (description "Modern tracker-based DAW")
