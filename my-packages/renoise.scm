@@ -27,6 +27,7 @@
   ;; #:use-module (srfi srfi-34)
   ;; #:use-module (guix i18n)
   ;; #:use-module (guix build utils)
+  ;; #:use-module (guix )
   )
 
 ;; references:
@@ -63,21 +64,22 @@
    (name "renoise")
    (version "3.4.3")
    (source
+    ;; (local-file renoise-source-path #:recursive #t)
     ;; can be just a (local-file "path" #:recursive #t/f?) instead?
     (cond (renoise-source-path
            ;; If a local path to the renoise tar file is specified, it will install
            ;; that. (Note that the following adds the tar file to the guix store, so
            ;; that it can be processed) (Also note that each paid renoise tarbomb has
            ;; a unique hash, so it cannot be predefined.)
-           ;; (let ((tarball (with-store store
-           ;;                            (download-to-store store renoise-source-path))))
-           ;;   (origin
-           ;;    (method url-fetch)
-           ;;    (uri renoise-source-path)
-           ;;    (sha256
-           ;;     (base32 (bytevector->nix-base32-string
-           ;;              (file-hash* tarball #:recursive? #false))))))
-	   (local-file renoise-source-path #:recursive #t)
+           (let ((tarball (with-store store
+                                      (download-to-store store renoise-source-path))))
+             (origin
+              (method url-fetch)
+              (uri renoise-source-path)
+              (sha256
+               (base32 (bytevector->nix-base32-string
+                        (file-hash* tarball #:recursive? #false))))))
+	  ;;  (local-file renoise-source-path #:recursive #t)
 	   )
           (t
            ;; If renoise-source-path is not defined, download and install the demo ver
