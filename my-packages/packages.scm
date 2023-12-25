@@ -4,7 +4,11 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
   #:use-module (gnu packages gcc)
-  #:use-module (srfi srfi-1)) ; for alist-delete
+  #:use-module (srfi srfi-1)
+  ;; test
+  #:use-module ((nonguix licenses) #:prefix license:)
+  #:use-module (nonguix build-system binary) ; for binary-build-system
+  ) ; for alist-delete
 
 ;; reference file:
 ;; https://github.com/daviwil/channel-x/blob/master/channel-x/packages/video.scm
