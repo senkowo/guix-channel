@@ -63,6 +63,7 @@
    (name "renoise")
    (version "3.4.3")
    (source
+    ;; can be just a (local-file "path" #:recursive #t/f?) instead?
     (cond (renoise-source-path
            ;; If a local path to the renoise tar file is specified, it will install
            ;; that. (Note that the following adds the tar file to the guix store, so
@@ -158,8 +159,8 @@
                               (string-append all
                                              indent "exit 0\n")))
 
-                            ;; (invoke "cat" "./install.sh") ; debug
-
+                            (invoke "cat" "./install.sh") ; debug
+			    
                             (format #T "> Running install script...~%")
                             (invoke "sh" "./install.sh")
                             (format #T "> Finished running install script...~%")
@@ -268,7 +269,10 @@
     (list alsa-lib
           `(,gcc "lib")
           libx11
-          libxext))
+          libxext
+	  ;; testing
+	  libxcursor
+	  ))
    (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
    
    (synopsis "Modern tracker-based DAW")
