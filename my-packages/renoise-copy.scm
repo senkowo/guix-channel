@@ -52,15 +52,16 @@
    (version "3.4.3")
    (source
     ;; can be just a (local-file "path" #:recursive #t/f?) instead?
-    (cond (renoise-source-path
-           (let ((tarball (with-store store
-                                      (download-to-store store renoise-source-path))))
-             (origin
-              (method url-fetch)
-              (uri renoise-source-path)
-              (sha256
-               (base32 (bytevector->nix-base32-string
-                        (file-hash* tarball #:recursive? #false)))))))
+    (cond
+     ;;      (renoise-source-path
+     ;;       (let ((tarball (with-store store
+     ;;                                  (download-to-store store renoise-source-path))))
+     ;;         (origin
+     ;;          (method url-fetch)
+     ;;          (uri renoise-source-path)
+     ;;          (sha256
+     ;;           (base32 (bytevector->nix-base32-string
+     ;;                    (file-hash* tarball #:recursive? #false)))))))
           (t
            (let ((def-uri
                    (string-append
