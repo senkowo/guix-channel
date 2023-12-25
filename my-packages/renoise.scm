@@ -136,7 +136,8 @@
                             ;; ------- Method 1 --------
 
                             (format #T "> Replacing variables in install script...~%")
-                            (substitute*
+			    
+			    (substitute*
                              "./install.sh"
                              ;; Below replaces the default target (e.g. /usr/local/) to
                              ;; the correct one (#$output).
@@ -263,7 +264,7 @@
     (list
      ;; grep
      ;; which
-     ;; xdg-utils
+     xdg-utils ; dont need
      ))
    (inputs
     (list alsa-lib
