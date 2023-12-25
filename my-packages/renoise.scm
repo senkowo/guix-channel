@@ -282,10 +282,10 @@
                                             "/License.txt")))))
 
 ;; run "gcc-unhidden:lib" to get the libs
-(define-public gcc-unhidden
-  (package
-   (inherit gcc)
-   (name "gcc-unhidden")
-   (properties (alist-delete 'hidden? (package-properties gcc)))))
+;; (define-public gcc-unhidden
+;;   (package
+;;    (inherit gcc)
+;;    (name "gcc-unhidden")
+;;    (properties (alist-delete 'hidden? (package-properties gcc)))))
 
 
