@@ -1,4 +1,4 @@
-(define-module (my-packages renoise)
+(define-module (my-packages renoise-copy)
   ;; package deps
   #:use-module (gnu packages linux) ; alsa-lib
   #:use-module (gnu packages xorg) ; libx11
@@ -62,7 +62,7 @@
      ;;          (sha256
      ;;           (base32 (bytevector->nix-base32-string
      ;;                    (file-hash* tarball #:recursive? #false)))))))
-          (t
+          ('t
            (let ((def-uri
                    (string-append
                     "https://files.renoise.com/demo/Renoise_"
