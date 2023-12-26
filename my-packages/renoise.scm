@@ -113,14 +113,14 @@
                        (replace
                         'install
                         (lambda* (#:key outputs inputs #:allow-other-keys)
-                          (let* ((target (string-append #$output))
+                          (let* ((out (string-append #$output))
                                  (bin (string-append #$output "/bin"))
                                  (share (string-append #$output "/share"))
-                                 (resources (string-append target "/lib/renoise-" #$version)))
+                                 (resources (string-append share "/renoise-" #$version)))
                             
                             (setenv "HOME" "/tmp")
                             (setenv "XDG_DATA_HOME" share)
-                            
+			    
                             
                             ;; ------- Method 1 --------
 
@@ -128,7 +128,7 @@
 			    
 			    ;; (substitute*
                             ;;  "./install.sh"
-                            ;;  ;; Below replaces the default target (e.g. /usr/local/) to
+                            ;;  ;; Below replaces the default out (e.g. /usr/local/) to
                             ;;  ;; the correct one (#$output).
                             ;;  (("(BINARY_PATH=).*" _ var)
                             ;;   (string-append var bin "\n"))
@@ -155,7 +155,7 @@
                             ;; (invoke "sh" "./install.sh")
                             ;; (format #T "> Finished running install script...~%")
 
-			    ;; (invoke "tree" target)
+			    ;; (invoke "tree" out)
 
 			    ;; ------misc
 			    
@@ -259,13 +259,9 @@
 			    
 			    ;; ------- Method 3 -------
 			    
-			    
-			    ;; Doing everything the NixOS install script does, bc why the hell not
-			    ;; (this better work, please :sob:).
-			    
-			    (format #T "> Fixing file permissions...~%")
-                            ;; wrapper around find-files (similar to "$ find A -type B
-                            ;; -name C -exec chmod D {} \;")
+                            ;; Fixes file permissions
+			    ;; (below function is a wrapper around find-files)
+			    ;; (similar to "$ find A -type B -name C -exec chmod D {} \;")
                             (define (find-and-chmod path type name-regex ch-perm)
                               (for-each (lambda (f)
 					  (chmod f ch-perm))
@@ -281,7 +277,6 @@
                                             ((file-name-predicate name-regex) file stat)))
 					 #:directories? #t
 					 #:fail-on-error? #t)))
-                            
                             (find-and-chmod "." "d" ".*" '#o755)
                             (find-and-chmod "." "f" ".*" '#o644)
                             (find-and-chmod "." "f" ".*sh" '#o755)
@@ -289,16 +284,47 @@
                             (chmod "./renoise" '#o755)
                             (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
 
+			    ;; extract Resources to out
+			    (copy-recursively "./Resources" out)
 
-			    (copy-recursively "./Resources" target)
+			    ;; expose binary to out
+			    (install-file "./renoise" out)
 
-			    (format #T "> Installing the executable...~%")
-			    (install-file "./renoise" target)
-			    
-			    (format #T "> Linking the executable...~%")
+			    ;; link binary to out/bin
 			    (mkdir-p bin)
-			    (symlink (string-append target "/renoise")
+			    (symlink (string-append out "/renoise")
                                      (string-append bin "/renoise"))
+
+			    ;; install desktop launcher (xdg-desktop-menu)
+			    ;; (below changes the Exec path to the renoise binary)
+			    (let ((desktop-file "./Installer/renoise.desktop"))
+			      (substitute* desktop-file
+					   (("(Exec=).*( .*)" all exec ending)
+					    (string-append exec bin "/renoise" ending)))
+                              (install-file desktop-file
+					    (string-append share "/applications")))
+			    			    
+			    ;; Install icons
+			    ;; (are the outputs actually renoise-<res>.png instead?)
+			    ;; (rename instead of copy file?)
+                            (for-each (lambda (res)
+					(let ((icons-dir (string-append share "/icons/hicolor/"
+								  res "x" res "/apps")))
+					  (mkdir-p icons-dir)
+					  (copy-file
+					   (string-append "./Installer/renoise-" res ".png")
+					   (string-append icons-dir "/renoise.png"))))
+                                      '("48" "64" "128"))
+
+			    ;; register mime types (xdg-mime)
+			    (install-file "./Installer/renoise.xml"
+					  (string-append share "/mime/packages"))
+
+			    ;; install man files
+                            (install-file "./Installer/renoise.1.gz"
+					  (string-append share "/man/man1"))
+                            (install-file "./Installer/renoise-pattern-effects.5.gz"
+					  (string-append share "/man/man5"))
 
 			    )))))))
    ;; during install
