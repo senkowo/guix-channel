@@ -93,7 +93,7 @@
      (match (get-current-system)
        ("x86_64"
         (list #:patchelf-plan #~(list (list "renoise"
-                                            '("libc" "gcc" "alsa-lib" "libx11" "libxext" "libxcursor" "libxrandr"))
+                                            '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
                                       (list "Resources/AudioPluginServer_x86_64"
                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext")))))
        ("arm64"
@@ -120,13 +120,13 @@
                             
                             (setenv "HOME" "/tmp")
                             (setenv "XDG_DATA_HOME" share)
-			    
+                            
                             
                             ;; ------- Method 1 --------
 
                             ;; (format #T "> Replacing variables in install script...~%")
-			    
-			    ;; (substitute*
+                            
+                            ;; (substitute*
                             ;;  "./install.sh"
                             ;;  ;; Below replaces the default out (e.g. /usr/local/) to
                             ;;  ;; the correct one (#$output).
@@ -150,33 +150,33 @@
                             ;;                  indent "exit 0\n")))
 
                             ;; (invoke "cat" "./install.sh") ; debug
-			    
+                            
                             ;; (format #T "> Running install script...~%")
                             ;; (invoke "sh" "./install.sh")
                             ;; (format #T "> Finished running install script...~%")
 
-			    ;; (invoke "tree" out)
+                            ;; (invoke "tree" out)
 
-			    ;; ------misc
-			    
-			    ;; Fix icons issue:
-			    ;; (format #T "> Install icons system-wide...~%")
-			    ;; ;; Installing icons...
+                            ;; ------misc
+                            
+                            ;; Fix icons issue:
+                            ;; (format #T "> Install icons system-wide...~%")
+                            ;; ;; Installing icons...
                             ;; (format #T "> Installing icons...~%")
                             ;; (for-each (lambda (res)
-			    ;; 		(let ((dest-dir
-			    ;; 		       (string-append share "/icons/hicolor/"
-			    ;; 				      res "x" res "/apps")))
-			    ;; 		  (mkdir-p dest-dir)
-			    ;; 		  (copy-file
-			    ;; 		   (string-append resources "/Installer/renoise-" res
-			    ;; 				  ".png")
-			    ;; 		   (string-append dest-dir "/renoise.png"))))
+                            ;;          (let ((dest-dir
+                            ;;                 (string-append share "/icons/hicolor/"
+                            ;;                                res "x" res "/apps")))
+                            ;;            (mkdir-p dest-dir)
+                            ;;            (copy-file
+                            ;;             (string-append resources "/Installer/renoise-" res
+                            ;;                            ".png")
+                            ;;             (string-append dest-dir "/renoise.png"))))
                             ;;           '("48" "64" "128"))
-			    
-			    ;; ;; Fixing file permissions...
-			    
-			    ;; ------- Method 2 -------
+                            
+                            ;; ;; Fixing file permissions...
+                            
+                            ;; ------- Method 2 -------
 
                             ;; (format #T "> Fixing file permissions...~%")
                             
@@ -184,19 +184,19 @@
                             ;; ;; -name C -exec chmod D {} \;")
                             ;; (define (find-and-chmod path type name-regex ch-perm)
                             ;;   (for-each (lambda (f)
-			    ;; 		  (chmod f ch-perm))
-			    ;; 		(find-files
-			    ;; 		 path 
-			    ;; 		 (lambda (file stat) ; checks type and name-regex:
-			    ;; 		   (and
+                            ;;            (chmod f ch-perm))
+                            ;;          (find-files
+                            ;;           path 
+                            ;;           (lambda (file stat) ; checks type and name-regex:
+                            ;;             (and
                             ;;                 (cond ((equal? "d" type)
-			    ;; 			   (directory-exists? file))
-			    ;; 			  ((equal? "f" type)
-			    ;; 			   (not (directory-exists? file)))
-			    ;; 			  (t (error "invalid find-command type")))
+                            ;;                     (directory-exists? file))
+                            ;;                    ((equal? "f" type)
+                            ;;                     (not (directory-exists? file)))
+                            ;;                    (t (error "invalid find-command type")))
                             ;;                 ((file-name-predicate name-regex) file stat)))
-			    ;; 		 #:directories? #t
-			    ;; 		 #:fail-on-error? #t)))
+                            ;;           #:directories? #t
+                            ;;           #:fail-on-error? #t)))
                             
                             ;; (find-and-chmod "." "d" ".*" '#o755)
                             ;; (find-and-chmod "." "f" ".*" '#o644)
@@ -228,11 +228,11 @@
                             ;; ;; Installing the man file...
                             ;; (format #T "> Installing the man file...~%")
                             ;; (install-file "./Installer/renoise.1.gz"
-			    ;; 		  (string-append share "/man/man1"
-			    ;; 				 "/renoise.1.gz"))
+                            ;;            (string-append share "/man/man1"
+                            ;;                           "/renoise.1.gz"))
                             ;; (install-file "./Installer/renoise-pattern-effects.5.gz"
-			    ;; 		  (string-append share "/man/man5"
-			    ;; 				 "/renoise-pattern-effects.5.gz"))
+                            ;;            (string-append share "/man/man5"
+                            ;;                           "/renoise-pattern-effects.5.gz"))
                             
                             ;; ;; Registering MIME types... ; what's this do? location?
                             ;; (format #T "> Registering MIME types...~%")
@@ -242,12 +242,12 @@
                             ;; ;; Installing icons...
                             ;; (format #T "> Installing icons...~%")
                             ;; (for-each (lambda (res) 
-			    ;; 		(install-file
-			    ;; 		 (string-append resources "/Installer/renoise-" res
-			    ;; 				".png")
-			    ;; 		 (string-append share "/icons/hicolor/"
-			    ;; 				res "x" res
-			    ;; 				"/apps/renoise.png")))
+                            ;;          (install-file
+                            ;;           (string-append resources "/Installer/renoise-" res
+                            ;;                          ".png")
+                            ;;           (string-append share "/icons/hicolor/"
+                            ;;                          res "x" res
+                            ;;                          "/apps/renoise.png")))
                             ;;           '("48" "64" "128"))
                             
                             ;; ;; Installing desktop-menu shortcuts...
@@ -255,28 +255,28 @@
                             ;; (invoke "xdg-desktop-menu" "install" "--novendor"
                             ;;         (string-append resources "/Installer/renoise.desktop"))
 
-			    
-			    
-			    ;; ------- Method 3 -------
-			    
+                            
+                            
+                            ;; ------- Method 3 -------
+                            
                             ;; Fixes file permissions
-			    ;; (below function is a wrapper around find-files)
-			    ;; (similar to "$ find A -type B -name C -exec chmod D {} \;")
+                            ;; (below function is a wrapper around find-files)
+                            ;; (similar to "$ find A -type B -name C -exec chmod D {} \;")
                             (define (find-and-chmod path type name-regex ch-perm)
                               (for-each (lambda (f)
-					  (chmod f ch-perm))
-					(find-files
-					 path 
-					 (lambda (file stat) ; checks type and name-regex:
-					   (and
+                                          (chmod f ch-perm))
+                                        (find-files
+                                         path 
+                                         (lambda (file stat) ; checks type and name-regex:
+                                           (and
                                             (cond ((equal? "d" type)
-						   (directory-exists? file))
-						  ((equal? "f" type)
-						   (not (directory-exists? file)))
-						  (t (error "invalid find-command type")))
+                                                   (directory-exists? file))
+                                                  ((equal? "f" type)
+                                                   (not (directory-exists? file)))
+                                                  (t (error "invalid find-command type")))
                                             ((file-name-predicate name-regex) file stat)))
-					 #:directories? #t
-					 #:fail-on-error? #t)))
+                                         #:directories? #t
+                                         #:fail-on-error? #t)))
                             (find-and-chmod "." "d" ".*" '#o755)
                             (find-and-chmod "." "f" ".*" '#o644)
                             (find-and-chmod "." "f" ".*sh" '#o755)
@@ -284,70 +284,66 @@
                             (chmod "./renoise" '#o755)
                             (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
 
-			    ;; extract Resources to out
-			    (copy-recursively "./Resources" out)
+                            ;; extract Resources to out
+                            (copy-recursively "./Resources" out)
 
-			    ;; expose binary to out
-			    (install-file "./renoise" out)
+                            ;; expose binary to out
+                            (install-file "./renoise" out)
 
-			    ;; link binary to out/bin
-			    (mkdir-p bin)
-			    (symlink (string-append out "/renoise")
+                            ;; link binary to out/bin
+                            (mkdir-p bin)
+                            (symlink (string-append out "/renoise")
                                      (string-append bin "/renoise"))
 
-			    ;; install desktop launcher (xdg-desktop-menu)
-			    ;; (below changes the Exec path to the renoise binary)
-			    (let ((desktop-file "./Installer/renoise.desktop"))
-			      (substitute* desktop-file
-					   (("(Exec=).*( .*)" all exec ending)
-					    (string-append exec bin "/renoise" ending)))
+                            ;; install desktop launcher (xdg-desktop-menu)
+                            ;; (below changes the Exec path to the renoise binary)
+                            (let ((desktop-file "./Installer/renoise.desktop"))
+                              (substitute* desktop-file
+                                           (("(Exec=).*( .*)" all exec ending)
+                                            (string-append exec bin "/renoise" ending)))
                               (install-file desktop-file
-					    (string-append share "/applications")))
-			    			    
-			    ;; Install icons
-			    ;; (are the outputs actually renoise-<res>.png instead?)
-			    ;; (rename instead of copy file?)
+                                            (string-append share "/applications")))
+                            
+                            ;; Install icons
+                            ;; (are the outputs actually renoise-<res>.png instead?)
+                            ;; (rename instead of copy file?)
                             (for-each (lambda (res)
-					(let ((icons-dir (string-append share "/icons/hicolor/"
-								  res "x" res "/apps")))
-					  (mkdir-p icons-dir)
-					  (copy-file
-					   (string-append "./Installer/renoise-" res ".png")
-					   (string-append icons-dir "/renoise.png"))))
+                                        (let ((icons-dir (string-append share "/icons/hicolor/"
+									res "x" res "/apps")))
+                                          (mkdir-p icons-dir)
+                                          (copy-file
+                                           (string-append "./Installer/renoise-" res ".png")
+                                           (string-append icons-dir "/renoise.png"))))
                                       '("48" "64" "128"))
 
-			    ;; register mime types (xdg-mime)
-			    (install-file "./Installer/renoise.xml"
-					  (string-append share "/mime/packages"))
+                            ;; register mime types (xdg-mime)
+                            (install-file "./Installer/renoise.xml"
+                                          (string-append share "/mime/packages"))
 
-			    ;; install man files
+                            ;; install man files
                             (install-file "./Installer/renoise.1.gz"
-					  (string-append share "/man/man1"))
+                                          (string-append share "/man/man1"))
                             (install-file "./Installer/renoise-pattern-effects.5.gz"
-					  (string-append share "/man/man5"))
+                                          (string-append share "/man/man5"))
 
-			    )))))))
-   ;; during install
+                            )))))))
    (native-inputs
     (list
-     grep
-     which
-     xdg-utils
-     util-linux
-     ;; debug
+     ;; xdg-utils
+     ;; util-linux
      ))
-   ;; post install
    (inputs
-    (list alsa-lib
-          `(,gcc "lib")
-          libx11
-          libxext
-	  libxcursor
-	  libxrandr
-	  ;; testing
-	  xdg-utils		  ; need xdg-icon-resource at startup?
-	  mpg123
-	  ))
+    (list
+     alsa-lib
+     `(,gcc "lib")
+     libx11
+     libxext
+     mpg123
+     ;; xdg-utils                 ; need xdg-icon-resource at startup?
+     ;; not needed probably
+     ;; libxcursor
+     ;; libxrandr
+     ))
    (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
    
    (synopsis "Modern tracker-based DAW")
@@ -365,7 +361,7 @@
   (define transform-install-path
     (options->transformation
      '((with-source
-	. "renoise=/home/yui/Music/prod/misc/test/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz"))))
+        . "renoise=/home/yui/Music/prod/misc/test/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz"))))
   (packages->manifest (list (transform-install-path renoise))))
 
 paid-renoise-ver-manifest
