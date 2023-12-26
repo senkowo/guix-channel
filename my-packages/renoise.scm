@@ -93,7 +93,7 @@
      (match (get-current-system)
        ("x86_64"
         (list #:patchelf-plan #~(list (list "renoise"
-                                            '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
+                                            '("libc" "gcc" "alsa-lib" "libx11" "libxext" "libxcursor" "libxrandr"))
                                       (list "Resources/AudioPluginServer_x86_64"
                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext")))))
        ("arm64"
@@ -116,7 +116,7 @@
                           (let* ((target (string-append #$output))
                                  (bin (string-append #$output "/bin"))
                                  (share (string-append #$output "/share"))
-                                 (resources (string-append share "/renoise-" #$version)))
+                                 (resources (string-append target "/lib/renoise-" #$version)))
                             
                             (setenv "HOME" "/tmp")
                             (setenv "XDG_DATA_HOME" share)
@@ -178,8 +178,92 @@
 			    
 			    ;; ------- Method 2 -------
 
-                            (format #T "> Fixing file permissions...~%")
+                            ;; (format #T "> Fixing file permissions...~%")
                             
+                            ;; ;; wrapper around find-files (similar to "$ find A -type B
+                            ;; ;; -name C -exec chmod D {} \;")
+                            ;; (define (find-and-chmod path type name-regex ch-perm)
+                            ;;   (for-each (lambda (f)
+			    ;; 		  (chmod f ch-perm))
+			    ;; 		(find-files
+			    ;; 		 path 
+			    ;; 		 (lambda (file stat) ; checks type and name-regex:
+			    ;; 		   (and
+                            ;;                 (cond ((equal? "d" type)
+			    ;; 			   (directory-exists? file))
+			    ;; 			  ((equal? "f" type)
+			    ;; 			   (not (directory-exists? file)))
+			    ;; 			  (t (error "invalid find-command type")))
+                            ;;                 ((file-name-predicate name-regex) file stat)))
+			    ;; 		 #:directories? #t
+			    ;; 		 #:fail-on-error? #t)))
+                            
+                            ;; (find-and-chmod "." "d" ".*" '#o755)
+                            ;; (find-and-chmod "." "f" ".*" '#o644)
+                            ;; (find-and-chmod "." "f" ".*sh" '#o755)
+                            ;; (find-and-chmod "./Installer/xdg-utils" "f" "xdg-.*" '#o755)
+                            ;; (chmod "./renoise" '#o755)
+                            ;; (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
+
+                            ;; ;; Installing shared resources...
+                            ;; (format #T "> Installing shared resources...~%")
+                            ;; (mkdir-p resources) ; vvv does not copy the src dir itself
+                            ;; (copy-recursively "./Resources" resources)
+                            ;; (install-file "./install.sh" resources)
+                            ;; (install-file "./uninstall.sh" resources)
+                            ;; (copy-recursively "./Installer"
+                            ;;                   (string-append resources "/Installer"))
+                            
+                            ;; ;; Installing the executable...
+                            ;; (format #T "> Installing the executable...~%")
+                            ;; (mkdir-p bin)
+                            ;; (copy-file "./renoise" ; dont install-file, want a different name
+                            ;;            (string-append bin "/renoise-" #$version))
+                            
+                            ;; ;; Linking the executable...
+                            ;; (format #T "> Linking the executable...~%")
+                            ;; (symlink (string-append bin "/renoise-" #$version)
+                            ;;          (string-append bin "/renoise"))
+
+                            ;; ;; Installing the man file...
+                            ;; (format #T "> Installing the man file...~%")
+                            ;; (install-file "./Installer/renoise.1.gz"
+			    ;; 		  (string-append share "/man/man1"
+			    ;; 				 "/renoise.1.gz"))
+                            ;; (install-file "./Installer/renoise-pattern-effects.5.gz"
+			    ;; 		  (string-append share "/man/man5"
+			    ;; 				 "/renoise-pattern-effects.5.gz"))
+                            
+                            ;; ;; Registering MIME types... ; what's this do? location?
+                            ;; (format #T "> Registering MIME types...~%")
+                            ;; (invoke "xdg-mime" "install" "--novendor"
+                            ;;         (string-append resources "/Installer/renoise.xml"))
+
+                            ;; ;; Installing icons...
+                            ;; (format #T "> Installing icons...~%")
+                            ;; (for-each (lambda (res) 
+			    ;; 		(install-file
+			    ;; 		 (string-append resources "/Installer/renoise-" res
+			    ;; 				".png")
+			    ;; 		 (string-append share "/icons/hicolor/"
+			    ;; 				res "x" res
+			    ;; 				"/apps/renoise.png")))
+                            ;;           '("48" "64" "128"))
+                            
+                            ;; ;; Installing desktop-menu shortcuts...
+                            ;; (format #T "> Installing desktop-menu shortcuts...~%")
+                            ;; (invoke "xdg-desktop-menu" "install" "--novendor"
+                            ;;         (string-append resources "/Installer/renoise.desktop"))
+
+			    
+			    
+			    ;; ------- Method 3 -------
+			    
+			    
+			    ;; Doing everything the NixOS install script does, bc why the hell not
+			    ;; (this better work, please :sob:).
+			    
+			    (format #T "> Fixing file permissions...~%")
                             ;; wrapper around find-files (similar to "$ find A -type B
                             ;; -name C -exec chmod D {} \;")
                             (define (find-and-chmod path type name-regex ch-perm)
@@ -205,59 +289,18 @@
                             (chmod "./renoise" '#o755)
                             (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
 
-                            ;; Installing shared resources...
-                            (format #T "> Installing shared resources...~%")
-                            (mkdir-p resources) ; vvv does not copy the src dir itself
-                            (copy-recursively "./Resources" resources)
-                            (install-file "./install.sh" resources)
-                            (install-file "./uninstall.sh" resources)
-                            (copy-recursively "./Installer"
-                                              (string-append resources "/Installer"))
-                            
-                            ;; Installing the executable...
-                            (format #T "> Installing the executable...~%")
-                            (mkdir-p bin)
-                            (copy-file "./renoise" ; dont install-file, want a different name
-                                       (string-append bin "/renoise-" #$version))
-                            
-                            ;; Linking the executable...
-                            (format #T "> Linking the executable...~%")
-                            (symlink (string-append bin "/renoise-" #$version)
+
+			    (copy-recursively "./Resources" target)
+
+			    (format #T "> Installing the executable...~%")
+			    (install-file "./renoise" target)
+			    
+			    (format #T "> Linking the executable...~%")
+			    (mkdir-p bin)
+			    (symlink (string-append target "/renoise")
                                      (string-append bin "/renoise"))
 
-                            ;; Installing the man file...
-                            (format #T "> Installing the man file...~%")
-                            (install-file "./Installer/renoise.1.gz"
-					  (string-append share "/man/man1"
-							 "/renoise.1.gz"))
-                            (install-file "./Installer/renoise-pattern-effects.5.gz"
-					  (string-append share "/man/man5"
-							 "/renoise-pattern-effects.5.gz"))
-                            
-                            ;; Registering MIME types... ; what's this do? location?
-                            (format #T "> Registering MIME types...~%")
-                            (invoke "xdg-mime" "install" "--novendor"
-                                    (string-append resources "/Installer/renoise.xml"))
-
-                            ;; Installing icons...
-                            (format #T "> Installing icons...~%")
-                            (for-each (lambda (res) 
-					(install-file
-					 (string-append resources "/Installer/renoise-" res
-							".png")
-					 (string-append share "/icons/hicolor/"
-							res "x" res
-							"/apps/renoise.png")))
-                                      '("48" "64" "128"))
-                            
-                            ;; Installing desktop-menu shortcuts...
-                            (format #T "> Installing desktop-menu shortcuts...~%")
-                            (invoke "xdg-desktop-menu" "install" "--novendor"
-                                    (string-append resources "/Installer/renoise.desktop")) 
-			    
-			    
-			    
-                            )))))))
+			    )))))))
    ;; during install
    (native-inputs
     (list
@@ -273,8 +316,9 @@
           `(,gcc "lib")
           libx11
           libxext
-	  ;; testing
 	  libxcursor
+	  libxrandr
+	  ;; testing
 	  xdg-utils		  ; need xdg-icon-resource at startup?
 	  mpg123
 	  ))
