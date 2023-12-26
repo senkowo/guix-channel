@@ -5,6 +5,7 @@
   #:use-module (gnu packages base) ; which
   #:use-module (gnu packages freedesktop) ; xdg-utils
   #:use-module (gnu packages gcc) ; gcc
+  #:use-module (gnu packages mp3) ; mpg123
   ;; utils
   #:use-module (guix packages) ; package, origin, ...
   #:use-module (guix download) ; download-to-store, url-fetch/tarbomb, ...
@@ -123,39 +124,41 @@
                             
                             ;; ------- Method 1 --------
 
-                            (format #T "> Replacing variables in install script...~%")
+                            ;; (format #T "> Replacing variables in install script...~%")
 			    
-			    (substitute*
-                             "./install.sh"
-                             ;; Below replaces the default target (e.g. /usr/local/) to
-                             ;; the correct one (#$output).
-                             (("(BINARY_PATH=).*" _ var)
-                              (string-append var bin "\n"))
-                             (("(SYSTEM_LOCAL_SHARE=).*" _ var)
-                              (string-append var share "\n"))
-                             (("(RESOURCES_PATH=).*" _ var)
-                              (string-append var resources "\n"))
-                             ;; Turn "if [ `id -u` -ne 0 ]; then" into the following:
-                             ;; "if [ `id -u` -ne 0 ] && [ `id -u` -ne 999 ]; then"
-                             ;; This prevents the script from aborting with perm error.
-                             (("(if.*)(\\[.*id -u.*\\])(;.*)" _ iff brackets ending)
-                              (string-append iff brackets
-                                             " && [ `id -u` -ne 999 ]" ending "\n"))
-                             ;; By default, a successful installation will exit with an 
-                             ;; exit code of 1, which will cause the package installation
-                             ;; to fail. This adds an "exit 0" before that's called.
-                             (("(.*)echo.*Installation.*SUCCEEDED.*" all indent)
-                              (string-append all
-                                             indent "exit 0\n")))
+			    ;; (substitute*
+                            ;;  "./install.sh"
+                            ;;  ;; Below replaces the default target (e.g. /usr/local/) to
+                            ;;  ;; the correct one (#$output).
+                            ;;  (("(BINARY_PATH=).*" _ var)
+                            ;;   (string-append var bin "\n"))
+                            ;;  (("(SYSTEM_LOCAL_SHARE=).*" _ var)
+                            ;;   (string-append var share "\n"))
+                            ;;  (("(RESOURCES_PATH=).*" _ var)
+                            ;;   (string-append var resources "\n"))
+                            ;;  ;; Turn "if [ `id -u` -ne 0 ]; then" into the following:
+                            ;;  ;; "if [ `id -u` -ne 0 ] && [ `id -u` -ne 999 ]; then"
+                            ;;  ;; This prevents the script from aborting with perm error.
+                            ;;  (("(if.*)(\\[.*id -u.*\\])(;.*)" _ iff brackets ending)
+                            ;;   (string-append iff brackets
+                            ;;                  " && [ `id -u` -ne 999 ]" ending "\n"))
+                            ;;  ;; By default, a successful installation will exit with an 
+                            ;;  ;; exit code of 1, which will cause the package installation
+                            ;;  ;; to fail. This adds an "exit 0" before that's called.
+                            ;;  (("(.*)echo.*Installation.*SUCCEEDED.*" all indent)
+                            ;;   (string-append all
+                            ;;                  indent "exit 0\n")))
 
-                            (invoke "cat" "./install.sh") ; debug
+                            ;; (invoke "cat" "./install.sh") ; debug
 			    
-                            (format #T "> Running install script...~%")
-                            (invoke "sh" "./install.sh")
-                            (format #T "> Finished running install script...~%")
+                            ;; (format #T "> Running install script...~%")
+                            ;; (invoke "sh" "./install.sh")
+                            ;; (format #T "> Finished running install script...~%")
 
-			    (invoke "tree" target)
+			    ;; (invoke "tree" target)
 
+			    ;; ------misc
+			    
 			    ;; Fix icons issue:
 			    ;; (format #T "> Install icons system-wide...~%")
 			    ;; ;; Installing icons...
@@ -171,15 +174,100 @@
 			    ;; 		   (string-append dest-dir "/renoise.png"))))
                             ;;           '("48" "64" "128"))
 			    
+			    ;; ;; Fixing file permissions...
+			    
+			    ;; ------- Method 2 -------
+
+                            (format #T "> Fixing file permissions...~%")
+                            
+                            ;; wrapper around find-files (similar to "$ find A -type B
+                            ;; -name C -exec chmod D {} \;")
+                            (define (find-and-chmod path type name-regex ch-perm)
+                              (for-each (lambda (f)
+					  (chmod f ch-perm))
+					(find-files
+					 path 
+					 (lambda (file stat) ; checks type and name-regex:
+					   (and
+                                            (cond ((equal? "d" type)
+						   (directory-exists? file))
+						  ((equal? "f" type)
+						   (not (directory-exists? file)))
+						  (t (error "invalid find-command type")))
+                                            ((file-name-predicate name-regex) file stat)))
+					 #:directories? #t
+					 #:fail-on-error? #t)))
+                            
+                            (find-and-chmod "." "d" ".*" '#o755)
+                            (find-and-chmod "." "f" ".*" '#o644)
+                            (find-and-chmod "." "f" ".*sh" '#o755)
+                            (find-and-chmod "./Installer/xdg-utils" "f" "xdg-.*" '#o755)
+                            (chmod "./renoise" '#o755)
+                            (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
+
+                            ;; Installing shared resources...
+                            (format #T "> Installing shared resources...~%")
+                            (mkdir-p resources) ; vvv does not copy the src dir itself
+                            (copy-recursively "./Resources" resources)
+                            (install-file "./install.sh" resources)
+                            (install-file "./uninstall.sh" resources)
+                            (copy-recursively "./Installer"
+                                              (string-append resources "/Installer"))
+                            
+                            ;; Installing the executable...
+                            (format #T "> Installing the executable...~%")
+                            (mkdir-p bin)
+                            (copy-file "./renoise" ; dont install-file, want a different name
+                                       (string-append bin "/renoise-" #$version))
+                            
+                            ;; Linking the executable...
+                            (format #T "> Linking the executable...~%")
+                            (symlink (string-append bin "/renoise-" #$version)
+                                     (string-append bin "/renoise"))
+
+                            ;; Installing the man file...
+                            (format #T "> Installing the man file...~%")
+                            (install-file "./Installer/renoise.1.gz"
+					  (string-append share "/man/man1"
+							 "/renoise.1.gz"))
+                            (install-file "./Installer/renoise-pattern-effects.5.gz"
+					  (string-append share "/man/man5"
+							 "/renoise-pattern-effects.5.gz"))
+                            
+                            ;; Registering MIME types... ; what's this do? location?
+                            (format #T "> Registering MIME types...~%")
+                            (invoke "xdg-mime" "install" "--novendor"
+                                    (string-append resources "/Installer/renoise.xml"))
+
+                            ;; Installing icons...
+                            (format #T "> Installing icons...~%")
+                            (for-each (lambda (res) 
+					(install-file
+					 (string-append resources "/Installer/renoise-" res
+							".png")
+					 (string-append share "/icons/hicolor/"
+							res "x" res
+							"/apps/renoise.png")))
+                                      '("48" "64" "128"))
+                            
+                            ;; Installing desktop-menu shortcuts...
+                            (format #T "> Installing desktop-menu shortcuts...~%")
+                            (invoke "xdg-desktop-menu" "install" "--novendor"
+                                    (string-append resources "/Installer/renoise.desktop")) 
+			    
+			    
+			    
                             )))))))
+   ;; during install
    (native-inputs
     (list
      grep
      which
      xdg-utils
+     util-linux
      ;; debug
-     tree
      ))
+   ;; post install
    (inputs
     (list alsa-lib
           `(,gcc "lib")
@@ -187,7 +275,8 @@
           libxext
 	  ;; testing
 	  libxcursor
-	  xdg-utils ; need xdg-icon-resource at startup?
+	  xdg-utils		  ; need xdg-icon-resource at startup?
+	  mpg123
 	  ))
    (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
    
