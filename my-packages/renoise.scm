@@ -154,12 +154,31 @@
                             (invoke "sh" "./install.sh")
                             (format #T "> Finished running install script...~%")
 
+			    (invoke "tree" target)
+
+			    ;; Fix icons issue:
+			    ;; (format #T "> Install icons system-wide...~%")
+			    ;; ;; Installing icons...
+                            ;; (format #T "> Installing icons...~%")
+                            ;; (for-each (lambda (res)
+			    ;; 		(let ((dest-dir
+			    ;; 		       (string-append share "/icons/hicolor/"
+			    ;; 				      res "x" res "/apps")))
+			    ;; 		  (mkdir-p dest-dir)
+			    ;; 		  (copy-file
+			    ;; 		   (string-append resources "/Installer/renoise-" res
+			    ;; 				  ".png")
+			    ;; 		   (string-append dest-dir "/renoise.png"))))
+                            ;;           '("48" "64" "128"))
+			    
                             )))))))
    (native-inputs
     (list
-     ;; grep
-     ;; which
-     ;; xdg-utils
+     grep
+     which
+     xdg-utils
+     ;; debug
+     tree
      ))
    (inputs
     (list alsa-lib
@@ -168,6 +187,7 @@
           libxext
 	  ;; testing
 	  libxcursor
+	  xdg-utils ; need xdg-icon-resource at startup?
 	  ))
    (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
    
