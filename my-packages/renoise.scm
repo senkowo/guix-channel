@@ -20,17 +20,8 @@
   ;; transformations
   #:use-module (guix transformations) ; options->transformation
   #:use-module (guix profiles) ; packages->manifest
-  ;; #:use-module (guix licenses)
   #:use-module ((nonguix licenses) #:prefix license:)
   #:use-module (nonguix build-system binary) ; for binary-build-system
-  ;; test...
-  ;; #:use-module (ice-9 match)
-  ;; #:use-module (ice-9 regex)
-  ;; #:use-module (srfi srfi-1)
-  ;; #:use-module (srfi srfi-26)
-  ;; #:use-module (srfi srfi-34)
-  ;; #:use-module (guix i18n)
-  ;; #:use-module (guix build utils)
   )
 
 ;; references:
@@ -56,9 +47,9 @@
     ("armhf-linux" "armhf")))
 
 ;; renoise demo ver
-(define-public renoise-demo
+(define-public renoise
   (package
-    (name "renoise-demo")
+    (name "renoise")
     (version "3.4.3")
     (source
      (origin
@@ -179,23 +170,16 @@
                                              (string-append share "/man/man5"))
 
                                )))))))
-    (native-inputs
-     (list
-      ;; xdg-utils
-      ;; util-linux
-      ))
+    ;; (native-inputs
+    ;;  (list xdg-utils
+    ;;        util-linux
+    ;;        ))
     (inputs
-     (list
-      alsa-lib
-      `(,gcc "lib")
-      libx11
-      libxext
-      mpg123
-      ;; xdg-utils                 ; need xdg-icon-resource at startup?
-      ;; not needed probably
-      ;; libxcursor
-      ;; libxrandr
-      ))
+     (list alsa-lib
+           `(,gcc "lib")
+           libx11
+           libxext
+           mpg123))
     (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
     
     (synopsis "Modern tracker-based DAW")
@@ -206,10 +190,6 @@
 
 ;; just for testing
 (define-public paid-renoise-ver-manifest
-  (define renoise
-    (package
-      (inherit renoise-demo)
-      (name "renoise")))
   (define transform-install-path
     (options->transformation
      '((with-source
@@ -218,22 +198,6 @@
 
 paid-renoise-ver-manifest
 
-
-;; (local-file renoise-source-path #:recursive #t)
-;; can be just a (local-file "path" #:recursive #t/f?) instead?
-;; If a local path to the renoise tar file is specified, it will install
-;; that. (Note that the following adds the tar file to the guix store, so
-;; that it can be processed) (Also note that each paid renoise tarbomb has
-;; a unique hash, so it cannot be predefined.)
-;; (let ((tarball (with-store store
-;;                            (download-to-store store renoise-source-path))))
-;;   (origin
-;;    (method url-fetch)
-;;    (uri renoise-source-path)
-;;    (sha256
-;;     (base32 (bytevector->nix-base32-string
-;;              (file-hash* tarball #:recursive? #false))))))
-;; )
 
 ;; run "gcc-unhidden:lib" to get the libs
 ;; (define-public gcc-unhidden
