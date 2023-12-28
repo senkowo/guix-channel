@@ -1,4 +1,4 @@
-(define-module (ymi packages renoise)
+(define-module (yumi packages renoise)
   ;; package deps
   #:use-module (gnu packages linux) ; alsa-lib
   #:use-module (gnu packages xorg) ; libx11
