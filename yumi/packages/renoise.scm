@@ -1,4 +1,4 @@
-(define-module (my-packages renoise)
+(define-module (ymi packages renoise)
   ;; package deps
   #:use-module (gnu packages linux) ; alsa-lib
   #:use-module (gnu packages xorg) ; libx11
@@ -172,8 +172,7 @@
                                )))))))
     ;; (native-inputs
     ;;  (list xdg-utils
-    ;;        util-linux
-    ;;        ))
+    ;;        util-linux))
     (inputs
      (list alsa-lib
            `(,gcc "lib")
@@ -188,22 +187,15 @@
     (license (license:nonfree (string-append "file:///share/doc/renoise-" version
                                              "/License.txt")))))
 
-;; just for testing
-(define-public paid-renoise-ver-manifest
-  (define transform-install-path
-    (options->transformation
-     '((with-source
-        . "renoise=/home/yui/Music/prod/misc/test/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz"))))
-  (packages->manifest (list (transform-install-path renoise))))
+(define transform-install-path
+  (options->transformation
+   '((with-source
+      . "renoise=/home/yui/Music/prod/misc/test/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz"))))
 
-paid-renoise-ver-manifest
+(define-public renoise-full
+  (package
+    (inherit (transform-install-path renoise))
+    (name "renoise-full")))
 
-
-;; run "gcc-unhidden:lib" to get the libs
-;; (define-public gcc-unhidden
-;;   (package
-;;    (inherit gcc)
-;;    (name "gcc-unhidden")
-;;    (properties (alist-delete 'hidden? (package-properties gcc)))))
-
+renoise-full
 

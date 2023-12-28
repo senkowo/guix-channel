@@ -1,4 +1,4 @@
-(define-module (my-packages packages)
+(define-module (yumi packages misc)
   #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix git-download)
