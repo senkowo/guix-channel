@@ -190,7 +190,7 @@
 (define transform-install-path
   (options->transformation
    '((with-source
-      . "renoise=/home/yui/Music/prod/misc/test/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz"))))
+      . "renoise=/home/yui/Music/prod/misc/rns_343_linux_x86_64.tar.gz"))))
 
 (define-public renoise-full
   (package
