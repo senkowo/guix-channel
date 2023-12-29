@@ -28,16 +28,7 @@
 ;; https://github.com/daviwil/channel-x/blob/master/channel-x/packages/video.scm
 ;; https://gitlab.com/guix-gaming-channels/games ; avoid deletion of sources when gc
 
-;; note: make sure to git commit before updating channels
-
-;; dont forget to implement guix build --source --root=<path> renoise
-;; (is this really necessary? will running gc really require having to reinstall? doubt...)
-
-;; alternative method: use "substitute* file ((regexp match-var…) body…) …" to edit
-;; installation file, remove sudo perms, change output path dirs.
-
-;; skip CPU frequency scaling bc it wont work!!!
-
+;; skips CPU frequency scaling check!
 
 ;; helper function
 (define (get-current-system)
