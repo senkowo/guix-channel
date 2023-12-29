@@ -1,0 +1,95 @@
+#+title: yumi
+
+A personal guix channel
+
+Packages:
+- Renoise
+
+* Adding channel
+
+* Renoise
+
+Renoise is a non-free, modern tracker-based DAW with demo and paid versions.
+
+The =renoise= package, by default, pulls a copy of the demo-version installer from the Renoise website. 
+
+** Install from file
+
+To install Renoise from an installer saved on your system (necessary for paid/full version), you must apply a transformation to the package. This can be done in several ways:
+
+*** Using command-line arguments
+
+~$ guix install --with-source=renoise=<path> renoise~
+(note the =renoise= after =--with-source==)
+
+This will install Renoise in the default profile using an installer found at =<path>= (replace this). The installer must be a =tar.gz= file.
+
+*** Using Scheme
+
+The following code applies the same transformation to the =renoise= package and returns it as =renoise-custom=. 
+
+#+begin_src scheme
+
+  (use-modules (gnu packages)
+               (guix transformations))
+
+  (define transform-install-path
+    (options->transformation
+     '((with-source
+        . "renoise=/home/yui/Music/prod/misc/rns_343_linux_x86_64.tar.gz"))))
+
+  (define renoise-custom
+    (transform-install-path (specification->package "renoise")))
+
+#+end_src
+
+If you want to install this to the default profile, you could add ~renoise-custom~ to the end of the file, then run ~$ guix install -f <path-to-file>~.
+
+Alternatively, you could add it to a pre-existing manifest, like this:
+
+#+begin_src scheme
+
+  (define-public renoise-manifest
+    (cons*
+     renoise-custom
+     (specifications->packages
+      '(;; vv jack vv
+        "jack" "jack2" "qjackctl"
+        "dbus"
+        "alsa-utils"
+        "programming-socks"
+        ))))
+
+#+end_src
+
+**** Using a package variant
+
+You could also create a package variant, but I wouldn't recommend it. Because assuming that you'll put it in your personal guix channel, and that you also pin your channel commits, you'd have to =guix pull= after every change to the path to the installer. But a package variant could be made like this:
+
+#+begin_src scheme
+
+  (define-public renoise-full
+    (package
+      (inherit
+       (transform-install-path (specification->package "renoise")))
+      (name "renoise-full")))
+
+#+end_src
+
+** Prevent guix gc from deleting sources in store
+
+If you installed from a local file, after running ~guix gc~, it may delete the installer from the store, requiring having to fetch the installer once more. I prefer to delete the renoise installer, at least from my home directory, after I install it, so in order to prevent guix from deleting the installer from the store, run the following:
+
+~$ guix build --with-source=renoise=<path> --root=<symlink-path> renoise~
+
+This will create a symlink at =<symlink-path>=, which points to the renoise package profile in the store. For as long as this symlink exists, =guix gc= will not remove the installer from the store. You should now be able to delete the installer in your home directory (i think).
+
+*** if you used a package variant
+
+If you created a renoise package variant that applies the transformation, then the command to run is a little bit different:
+
+~$ guix build --with-source=renoise-full=<path> --root=<symlink-path> renoise-full~
+(this is assuming the package name is =renoise-full=)
+
+* References
+- https://gitlab.com/guix-gaming-channels/games: on avoiding guix gc from deleting installer.
