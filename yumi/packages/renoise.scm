@@ -61,13 +61,14 @@
     (build-system binary-build-system)
     (arguments
      (append
+      (list #:strip-binaries? #f)
       ;; get a #:patchelf-plan variant relative to system type
       ;; (cant put variables in #:patchelf-plan?)
       (match (get-current-system)
         ("x86_64"
-         (list #:patchelf-plan #~(list (list "renoise"
+         (list #:patchelf-plan #~(list (list "Resources/AudioPluginServer_x86_64"
                                              '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
-                                       (list "Resources/AudioPluginServer_x86_64"
+                                       (list "renoise"
                                              '("libc" "gcc" "alsa-lib" "libx11" "libxext")))))
         ("arm64"
          (list #:patchelf-plan #~(list (list "renoise"
@@ -80,8 +81,7 @@
                                        (list "Resources/AudioPluginServer_armhf"
                                              '("libc" "gcc" "alsa-lib" "libx11" "libxext"))))))
       ;; append to the previous list containing #:patchelf-plan
-      (list #:strip-binaries? #f
-            #:phases #~(modify-phases %standard-phases
+      (list #:phases #~(modify-phases %standard-phases
                          (replace 'install
                            (lambda* (#:key outputs inputs #:allow-other-keys)
                              (let* ((out (string-append #$output))
@@ -185,4 +185,149 @@
                    "19hbfy5mwg9ywabcpbnv31caqy224si7cwpa84x1dwal2b360nix" ; arm64
                    "0hiyq4p2d3nwjzaa32zdkrcld51hx34wf97qmf2kqhkmdxs26i6m")) ; armhf
 
+;; renoise-3.4.3
 
+
+
+
+(define renoise-test
+  (package
+    (name "renoise")
+    (version "3.4.3")
+    (source
+     (origin
+       (method url-fetch/tarbomb)
+       (uri
+        ;; e.g. https://files.renoise.com/demo/Renoise_3_4_3_Demo_Linux_x86_64.tar.gz
+        (string-append "https://files.renoise.com/demo/Renoise_"
+                       (string-replace-substring version "." "_")
+                       "_Demo_Linux_"
+                       (get-current-system)
+                       ".tar.gz"))
+       (sha256
+        (base32
+         (match (get-current-system) ; i might not keep the hashes up to date, perchance.
+           ("x86_64" "0nkyidxyp8r7jgdjld6f1bsk59927rw0n1n4j492ncwblwszmp0j")
+           ("arm64" "")
+           ("armhf" ""))))))
+    (build-system binary-build-system)
+    (arguments
+     (append
+      (list #:strip-binaries? #f)
+      ;; get a #:patchelf-plan variant relative to system type
+      ;; (cant put variables in #:patchelf-plan?)
+      (match (get-current-system)
+        ("x86_64"
+         (list #:patchelf-plan #~(list (list "Resources/AudioPluginServer_x86_64"
+                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
+                                       (list "renoise"
+                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext")))))
+        ("arm64"
+         (list #:patchelf-plan #~(list (list "renoise"
+                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
+                                       (list "Resources/AudioPluginServer_arm64"
+                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext")))))
+        ("armhf"
+         (list #:patchelf-plan #~(list (list "renoise"
+                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
+                                       (list "Resources/AudioPluginServer_armhf"
+                                             '("libc" "gcc" "alsa-lib" "libx11" "libxext"))))))
+      ;; append to the previous list containing #:patchelf-plan
+      (list #:phases #~(modify-phases %standard-phases
+                         (replace 'install
+                           (lambda* (#:key outputs inputs #:allow-other-keys)
+                             (let* ((out (string-append #$output))
+                                    (bin (string-append #$output "/bin"))
+                                    (share (string-append #$output "/share")))
+                               
+                               (setenv "HOME" "/tmp")
+                               (setenv "XDG_DATA_HOME" share)
+                               
+                               ;; Fixes file permissions
+                               ;; (function below is a wrapper around find-files)
+                               ;; (similar to "$ find A -type B -name C -exec chmod D {} \;")
+                               (define (find-and-chmod path type name-regex ch-perm)
+                                 (for-each (lambda (f)
+                                             (chmod f ch-perm))
+                                           (find-files
+                                            path 
+                                            (lambda (file stat) ; checks type and name-regex:
+                                              (and
+                                               (cond ((equal? "d" type)
+                                                      (directory-exists? file))
+                                                     ((equal? "f" type)
+                                                      (not (directory-exists? file)))
+                                                     (t (error "invalid find-command type")))
+                                               ((file-name-predicate name-regex) file stat)))
+                                            #:directories? #t
+                                            #:fail-on-error? #t)))
+                               (find-and-chmod "." "d" ".*" '#o755)
+                               (find-and-chmod "." "f" ".*" '#o644)
+                               (find-and-chmod "." "f" ".*sh" '#o755)
+                               (find-and-chmod "./Installer/xdg-utils" "f" "xdg-.*" '#o755)
+                               (chmod "./renoise" '#o755)
+                               (find-and-chmod "./Resources" "f" "AudioPluginServer_.*" '#o755)
+
+                               ;; extract Resources to out
+                               (copy-recursively "./Resources" out)
+
+                               ;; put binary to out
+                               (install-file "./renoise" out)
+
+                               ;; link binary to out/bin
+                               (let ((renoise-binary (string-append out "/renoise")))
+                                 (mkdir-p bin)
+                                 (symlink renoise-binary
+                                          (string-append bin "/renoise"))
+                                 (symlink renoise-binary
+                                          (string-append bin "/renoise-" #$version)))
+                               
+                               ;; install desktop launcher (xdg-desktop-menu)
+                               (let ((desktop-file "./Installer/renoise.desktop"))
+                                 ;; first change the Exec= path to the binary:
+                                 (substitute* desktop-file
+                                   (("(Exec=).*( .*)$" all exec ending)
+                                    (string-append exec bin "/renoise" ending)))
+                                 (install-file desktop-file
+                                               (string-append share "/applications")))
+
+                               ;; install icons (xdg-icon-resource)
+                               (for-each (lambda (res)
+                                           (let ((icons-dir
+                                                  (string-append share "/icons/hicolor/"
+                                                                 res "x" res "/apps")))
+                                             (mkdir-p icons-dir)
+                                             (copy-file
+                                              (string-append "./Installer/renoise-" res ".png")
+                                              (string-append icons-dir "/renoise.png"))))
+                                         '("48" "64" "128"))
+
+                               ;; register mime types (xdg-mime)
+                               (install-file "./Installer/renoise.xml"
+                                             (string-append share "/mime/packages"))
+
+                               ;; install man files
+                               (install-file "./Installer/renoise.1.gz"
+                                             (string-append share "/man/man1"))
+                               (install-file "./Installer/renoise-pattern-effects.5.gz"
+                                             (string-append share "/man/man5"))
+
+                               )))))))
+    ;; (native-inputs
+    ;;  (list xdg-utils
+    ;;        util-linux))
+    (inputs
+     (list alsa-lib
+           `(,gcc "lib")
+           libx11
+           libxext
+           mpg123))
+    (supported-systems '("x86_64-linux" "aarch64-linux" "armhf-linux"))
+    
+    (synopsis "Modern tracker-based DAW")
+    (description "Modern tracker-based DAW")
+    (home-page "https://www.renoise.com/")
+    (license (license:nonfree (string-append "file:///share/doc/renoise-" version
+                                             "/License.txt")))))
+
+renoise-test
