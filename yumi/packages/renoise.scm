@@ -37,11 +37,11 @@
     ("aarch64-linux" "arm64")
     ("armhf-linux" "armhf")))
 
-;; renoise demo ver
-(define-public renoise
+;; build renoise from this
+(define (renoise-builder ver hash_x86_64 hash_arm64 hash_armhf)
   (package
     (name "renoise")
-    (version "3.4.3")
+    (version ver)
     (source
      (origin
        (method url-fetch/tarbomb)
@@ -55,9 +55,9 @@
        (sha256
         (base32
          (match (get-current-system) ; i might not keep the hashes up to date, perchance.
-           ("x86_64" "1hd7fbk0px45fxhqa7nqcnij8ls2fhpjp60v840vy2zqs9fkcr52")
-           ("arm64" "0zpkaiwwxn8yh3s1d22qswshbgaxx5d8iy17hb3w256zgb722yjw")
-           ("armhf" "18174b1lgsk73gxhala471ppzbrpa1cs953b5par998yqgh74znk"))))))
+           ("x86_64" hash_x86_64)
+           ("arm64" hash_arm64)
+           ("armhf" hash_armhf))))))
     (build-system binary-build-system)
     (arguments
      (append
@@ -177,5 +177,12 @@
     (home-page "https://www.renoise.com/")
     (license (license:nonfree (string-append "file:///share/doc/renoise-" version
                                              "/License.txt")))))
+
+;; The actual renoise packages below
+(define-public renoise-3.4.3
+  (renoise-builder "3.4.3"
+                   "0nkyidxyp8r7jgdjld6f1bsk59927rw0n1n4j492ncwblwszmp0j" ; x86_64
+                   "19hbfy5mwg9ywabcpbnv31caqy224si7cwpa84x1dwal2b360nix" ; arm64
+                   "0hiyq4p2d3nwjzaa32zdkrcld51hx34wf97qmf2kqhkmdxs26i6m")) ; armhf
 
 
