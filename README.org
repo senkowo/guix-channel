@@ -34,18 +34,26 @@ Homepage: https://www.renoise.com
 
 The =renoise= package, by default, pulls a copy of the demo-version installer from the Renoise website. 
 
+** Installing the demo version
+
+To install the demo version, you simply install the package as =renoise=.
+
 ** Install from a file
 
 To install Renoise from an installer saved on your system (necessary for the paid/full version), you must apply a transformation to the package. This can be done in several ways:
 
 *** Using command-line arguments
 
-~$ guix install --with-source=renoise=<path> renoise~
-(note the =renoise= after =--with-source==)
+~$ guix install --with-source=renoise@<ver>=<path> renoise@<ver>~
+(note the =renoise= after =--with-source==) 
 
-This will install Renoise in the default profile using an installer found at =<path>= (replace this). The installer must be a =tar.gz= file.
+This will install Renoise with version =<ver>= in the default profile using an installer found at =<path>=. The installer must be a =tar.gz= file.
 
-For more info, the =--with-source=renoise== transformation essentially adds the file at =<path>= to the guix store, similar to =guix download=, but to be used for building the specified package.
+An example, 
+~$ guix install --with-source=renoise@3.4.3=/home/yui/Downloads/rns_343_linux_x86_64.tar.gz renoise@3.4.3~
+
+Some more info:
+- The =--with-source=renoise@<ver>== transformation essentially adds the file at =<path>= to the guix store, similar to =guix download=, but to be used for building the specified package.
 
 *** Using Scheme
 
@@ -59,10 +67,10 @@ The following code applies the same transformation to the =renoise= package and 
   (define transform-install-path
     (options->transformation
      '((with-source
-        . "renoise=/home/yui/Downloads/rns_343_linux_x86_64.tar.gz"))))
+        . "renoise@3.4.3=/home/yui/Downloads/rns_343_linux_x86_64.tar.gz"))))
 
   (define-public renoise-custom
-    (transform-install-path (specification->package "renoise")))
+    (transform-install-path (specification->package "renoise@3.4.3")))
 
 #+end_src
 
