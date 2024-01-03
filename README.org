@@ -2,7 +2,7 @@
 
 A personal Guix channel
 
-This channel contains mostly non-free software I personally use that were not packaged anywhere else.
+This channel contains mostly non-free software I personally use, which I could not find packaged anywhere else.
 
 Programs provided by this channel:
 - Renoise
@@ -31,6 +31,7 @@ Add this channel to ~~/.config/guix/channels.scm~ like this:
 Renoise is a non-free, modern, tracker-based DAW with demo and paid versions.
 
 Homepage: https://www.renoise.com
+Package definition: [[file:yumi/packages/renoise.scm][yumi/packages/renoise.scm]]
 
 The =renoise= package, by default, pulls a copy of the demo-version installer from the Renoise website. 
 
@@ -101,13 +102,13 @@ You have the option to create a package variant that performs the transformation
   (define transform-install-path
     (options->transformation
      '((with-source
-        . "renoise=/home/yui/Downloads/rns_343_linux_x86_64.tar.gz"))))
+        . "renoise@3.4.3=/home/yui/Downloads/rns_343_linux_x86_64.tar.gz"))))
 
-  (define-public renoise-full
+  (define-public renoise-full-3.4.3
     (package
       (inherit
        (transform-install-path 
-        (specification->package "renoise")))
+        (specification->package "renoise@3.4.3"))) ; make sure to specify version
       (name "renoise-full")))
 
 #+end_src
@@ -118,7 +119,7 @@ If you installed Renoise from a local file, after running ~guix gc~, it may dele
 
 To prevent Guix from deleting the Renoise sources from the store, run the following:
 
-~$ guix build --with-source=renoise=<path> --root=<symlink-path> renoise~
+~$ guix build --with-source@<ver>=renoise=<path> --root=<symlink-path> renoise@<ver>~
 
 This will create a symlink at =<symlink-path>=, which points to the renoise package profile in the store. For as long as this symlink exists, =guix gc= will not remove the sources from the store. You should now be able to delete the Renoise installer in your home directory, without the fear of =guix gc= deleting the sources and having to re-fetch the installer.
 
@@ -126,7 +127,7 @@ This will create a symlink at =<symlink-path>=, which points to the renoise pack
 
 If you created a Renoise package variant that applies the transformation, the command to run is a little bit different:
 
-~$ guix build --with-source=renoise-full=<path> --root=<symlink-path> renoise-full~
+~$ guix build --with-source=renoise-full@<ver>=<path> --root=<symlink-path> renoise-full@<ver>~
 (this is assuming the package name is =renoise-full=)
 
 The package name specified after =--with-source== and at the very end must match your package variant's name.
@@ -135,11 +136,20 @@ The package name specified after =--with-source== and at the very end must match
 
 I'm not extremely savvy with Guix or scheme, so let me know if there are any ways in which I can improve this channel! :3
 
+For example:
+- making available certain Renoise versions
+- advice on writing package definitions
+
 * References
-- https://gitlab.com/guix-gaming-channels/games: on avoiding guix gc from deleting installer.
+- https://gitlab.com/guix-gaming-channels/games: on avoiding guix gc from deleting sources, and all around a great resource on non-free guix packages.
 
 * Notes to self
 - Does not specifying package version to transformation break things when the renoise package definition is updated?
 - Create multiple package defs for different versions?
 - Run guix git authenticate before any commits/pushes in master
 - key branch
+- Combine channel and config
+  - private?
+  - no, keep separate, so can write explaination of Guix on guix config, and at the bottom, have a link to the channel.
+- Guix channel is the only thing that needs to be on github, bc it needs to last for +5years
+- Keep codeberg for personal

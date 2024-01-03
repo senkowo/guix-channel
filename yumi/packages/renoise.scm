@@ -22,7 +22,7 @@
   #:use-module (guix profiles) ; packages->manifest
   #:use-module ((nonguix licenses) #:prefix license:)
   #:use-module (nonguix build-system binary) ; for binary-build-system
-  )
+  #:export (renoise-builder))
 
 ;; references:
 ;; https://github.com/daviwil/channel-x/blob/master/channel-x/packages/video.scm
@@ -38,7 +38,8 @@
     ("armhf-linux" "armhf")))
 
 ;; build renoise from this
-(define (renoise-builder ver hash_x86_64 hash_arm64 hash_armhf)
+(define* (renoise-builder ver hash_x86_64 hash_arm64 hash_armhf
+                          #:optional (current-system (get-current-system)))
   (package
     (name "renoise")
     (version ver)
@@ -50,11 +51,11 @@
         (string-append "https://files.renoise.com/demo/Renoise_"
                        (string-replace-substring version "." "_")
                        "_Demo_Linux_"
-                       (get-current-system)
+                       current-system
                        ".tar.gz"))
        (sha256
         (base32
-         (match (get-current-system) ; i might not keep the hashes up to date, perchance.
+         (match current-system ; i might not keep the hashes up to date, perchance.
            ("x86_64" hash_x86_64)
            ("arm64" hash_arm64)
            ("armhf" hash_armhf))))))
@@ -64,7 +65,7 @@
       (list #:strip-binaries? #f)
       ;; get a #:patchelf-plan variant relative to system type
       ;; (cant put variables in #:patchelf-plan?)
-      (match (get-current-system)
+      (match current-system
         ("x86_64"
          (list #:patchelf-plan #~(list (list "renoise"
                                              '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
@@ -84,9 +85,10 @@
       (list #:phases #~(modify-phases %standard-phases
                          (replace 'install
                            (lambda* (#:key outputs inputs #:allow-other-keys)
-                             (let* ((out (string-append #$output))
+                             (let* ((out #$output)
+                                    (share (string-append #$output "/share"))
                                     (bin (string-append #$output "/bin"))
-                                    (share (string-append #$output "/share")))
+                                    (version #$version))
                                
                                (setenv "HOME" "/tmp")
                                (setenv "XDG_DATA_HOME" share)
@@ -128,7 +130,7 @@
                                  (symlink renoise-binary
                                           (string-append bin "/renoise"))
                                  (symlink renoise-binary
-                                          (string-append bin "/renoise-" #$version)))
+                                          (string-append bin "/renoise-" version)))
                                
                                ;; install desktop launcher (xdg-desktop-menu)
                                (let ((desktop-file "./Installer/renoise.desktop"))
