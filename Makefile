@@ -9,3 +9,7 @@ sc:
 
 sr:
 	sudo -E guix system reconfigure systems/main.scm
+
+authenticate:
+	guix git authenticate commit senko
+# make magit run file before git push?
