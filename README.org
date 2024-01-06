@@ -145,11 +145,3 @@ For example:
 
 * Notes to self
 - Does not specifying package version to transformation break things when the renoise package definition is updated?
-- Create multiple package defs for different versions?
-- Run guix git authenticate before any commits/pushes in master
-- key branch
-- Combine channel and config
-  - private?
-  - no, keep separate, so can write explaination of Guix on guix config, and at the bottom, have a link to the channel.
-- Guix channel is the only thing that needs to be on github, bc it needs to last for +5years
-- Keep codeberg for personal
