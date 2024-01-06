@@ -139,6 +139,7 @@ I'm not extremely savvy with Guix or scheme, so let me know if there are any way
 For example:
 - making available certain Renoise versions
 - advice on writing package definitions
+- channel not working
 
 * References
 - https://gitlab.com/guix-gaming-channels/games: on avoiding guix gc from deleting sources, and all around a great resource on non-free guix packages.
