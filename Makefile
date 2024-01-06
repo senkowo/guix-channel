@@ -11,5 +11,8 @@ sr:
 	sudo -E guix system reconfigure systems/main.scm
 
 authenticate:
-	guix git authenticate commit senko
+	die(){ echo "ERROR"; exit 1 }
+	guix git authenticate commit senko || die
+	[ $(git config --get user.signingkey) ] || die
+
 # make magit run file before git push?
