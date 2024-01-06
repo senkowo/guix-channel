@@ -9,7 +9,7 @@ Programs provided by this channel:
 
 * Installation
 
-Add this channel to ~~/.config/guix/channels.scm~ like this:
+Add this channel to =~/.config/guix/channels.scm= like this:
 
 #+begin_src scheme
 
