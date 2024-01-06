@@ -45,14 +45,12 @@ To install the demo version, you simply install the package as =renoise=.
 To install Renoise from an installer saved on your system (necessary for the paid/full version), you must apply a transformation to the package. This can be done in several ways:
 
 *** Using command-line arguments
-#+begin_src shell
-$ guix install --with-source=renoise@<version>=<path-to-installer> renoise@<version>
-#+end_src
+
+~$ guix install --with-source=renoise@<version>=<path-to-installer> renoise@<version>~
 
 So for example:
-#+begin_src bash
-$ guix install --with-source=renoise@3.4.3=/home/yui/Downloads/rns_343_linux_x86_64.tar.gz renoise@3.4.3
-#+end_src
+
+~$ guix install --with-source=renoise@3.4.3=/home/yui/Downloads/rns_343_linux_x86_64.tar.gz renoise@3.4.3~
 
 This will install Renoise verison 3.4.3 in the default profile using an installer found at the path specified. The installer must be a =tar.gz= file.
 
