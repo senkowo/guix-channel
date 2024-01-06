@@ -19,9 +19,9 @@ Add this channel to ~~/.config/guix/channels.scm~ like this:
         ;; Enable signature verification:
         (introduction
          (make-channel-introduction
-          "c23d64f1b8cc086659f8781b27ab6c7314c5cca5"
+          "2517f6af408a5b4ad966f986ae8b9612a1280e21"
           (openpgp-fingerprint
-           "50F3 3E2E 5B0C 3D90 0424  ABE8 9BDC F497 A4BB CC7F"))))
+           "864D 7D40 2260 D1A5 E9B9  AC9B B703 FEDE 1CF1 30EA"))))
        %default-channels)
 
 #+end_src
