@@ -46,6 +46,8 @@ To install Renoise from an installer saved on your system (necessary for the pai
 
 *** Using command-line arguments
 
+Format:
+
 ~$ guix install --with-source=renoise@<version>=<path-to-installer> renoise@<version>~
 
 So for example:
