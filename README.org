@@ -31,6 +31,7 @@ Add this channel to =~/.config/guix/channels.scm= like this:
 Renoise is a non-free, modern, tracker-based DAW with demo and paid versions.
 
 Homepage: https://www.renoise.com 
+
 Package definition: [[file:yumi/packages/renoise.scm][yumi/packages/renoise.scm]]
 
 The =renoise= package, by default, pulls a copy of the demo-version installer from the Renoise website. 
