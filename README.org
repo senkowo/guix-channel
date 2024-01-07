@@ -32,7 +32,7 @@ Renoise is a non-free, modern, tracker-based DAW with demo and paid versions.
 
 Homepage: https://www.renoise.com 
 
-Package definition: [[file:yumi/packages/renoise.scm][yumi/packages/renoise.scm]]
+Package definition: [[file:yumi/packages/renoise.scm][./yumi/packages/renoise.scm]]
 
 The =renoise= package, by default, pulls a copy of the demo-version installer from the Renoise website. 
 
@@ -58,7 +58,7 @@ This will install Renoise verison 3.4.3 in the default profile using an installe
 
 Some explanations:
 - The =--with-source=renoise@<version>== transformation essentially adds the file found at =<path>= to the guix store, similar to what the command =guix download= does, but to be specifically used for building the specified package.
-- You should specify the exact Renoise version, because otherwise, if I add a new Renoise version to the channel, you will update to a newer Renoise version, but using an older Renoise installer, which might be problematic.
+- You should specify the exact Renoise version, because otherwise, if I add a new Renoise version to the channel, you will update to a newer Renoise package, but using an older Renoise installer, which might be problematic.
   - (Does anyone know how this could be mitigated in the renoise package definition? More info under [[*Contributing][Contributing]].)
 
 *** Using Scheme
@@ -152,7 +152,7 @@ Do the following to make sure everything is set up:
 *** Check CPU frequency governor
 
 #+begin_src sh
-cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+  $ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 #+end_src
 If this returns something other than =performance=, it means CPU frequency scaling is enabled, and should be disabled for Renoise to work properly. More info here: https://wiki.linuxaudio.org/wiki/system_configuration#cpu_frequency_scaling
 
@@ -167,11 +167,11 @@ I was able to fix this using the following code in my system configuration:
             (energy-perf-policy-on-ac "performance")
             (energy-perf-policy-on-bat "performance")))
 #+end_src
-If you dont use =tlp= or dont have a battery power supply on your computer, you shouldn't copy this code into your configuration.
+If you dont use =tlp= or dont have a battery power supply on your computer, you shouldn't blindly copy this code into your configuration.
 
 *** Check PAM audio configuration
 
-**** On non-guix systems: 
+**** On foreign distros: 
 Check if either =/etc/security/limits.d/audio.conf= exists or if running =grep -E "^[^#]+(rtprio).*$" /etc/security/limits.conf= returns some value. If so, PAM should be installed and configured for realtime audio applications. If you still have problems with ALSA or Jack (like crackles or too high latencies) look at https://wiki.linuxaudio.org/wiki/system_configuration#limitsconfaudioconf for help.
 
 **** On Guix System:
@@ -211,17 +211,13 @@ And also:
 
 *** Further configuration
 
-You'll want to set up Jack or pure Alsa to get Renoise to work. If you're using Pulseaudio, you will either need to do some heavy hacking, or install Pipewire. If you're using Guix System, the best approach is to set up Guix Home and install the Pipewire home service (you would then launch Renoise with =pw-jack renoise= to provide a Jack interface).
+You'll want to set up Jack or pure Alsa to get Renoise to work. If you're using Pulseaudio, you will either need to do some heavy hacking, or install Pipewire. If you're using Guix System, the best approach is to set up Guix Home and install the Pipewire home service (you would then launch Renoise with =$ pw-jack renoise= to provide a Jack interface).
 
 + Some resources:
-  - Info on Jack on Linux:
-https://bcacciaaudio.com/2018/01/30/audio-music-production-in-linux-part-1-setting-up-jack-audio/
-  - Getting Jack and Pulseaudio to work together:
-https://jackaudio.org/faq/pulseaudio_and_jack.html
-  - Daviwil's pulseaudio config
-https://codeberg.org/daviwil/dotfiles/src/branch/master/.config/pulse
-  - Article on Music production on Guix System:
-https://guix.gnu.org/en/blog/2020/music-production-on-guix-system/
+  - Info on Jack on Linux: https://bcacciaaudio.com/2018/01/30/audio-music-production-in-linux-part-1-setting-up-jack-audio/
+  - Getting Jack and Pulseaudio to work together: https://jackaudio.org/faq/pulseaudio_and_jack.html
+  - Daviwil's pulseaudio config: https://codeberg.org/daviwil/dotfiles/src/branch/master/.config/pulse
+  - Article on Music production on Guix System: https://guix.gnu.org/en/blog/2020/music-production-on-guix-system/
 
 ** Need help getting Renoise to work on Guix System?
 
@@ -232,8 +228,8 @@ Post an issue and I'll try to help out. There's a good chance I've faced a simil
 I'm not extremely savvy with Guix or scheme, so let me know if there are any ways in which I can improve this channel! :3
 
 For example:
-- making available certain Renoise versions
-- channel not working
+- request to make available certain Renoise versions
+- channel not working!
 - improving package definitions, but especially Renoise's
   + To fix/implement in Renoise package: 
     1. Check CPU frequency governor and PAM audio configuration.
@@ -250,4 +246,4 @@ For example:
 - https://guix.gnu.org/en/blog/2020/music-production-on-guix-system/: Article on music production on Guix.
 
 * Notes to self
-- Does not specifying package version to transformation break things when the renoise package definition is updated?
+- Does not specifying package version to transformation actually break things when the renoise package definition is updated?
