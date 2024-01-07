@@ -1,0 +1,10 @@
+;; -*- mode: scheme; -*-
+
+(channel-news
+  (version 0)
+  (entry (commit "d1256cf136ced2ed4a3736417fbced678bacb1f6")
+         (title (en "@emph{Hello world!}"))
+         (body (en "This marks the birth of this channel :3")))
+  (entry (tag "created-news")
+         (title (en "Available Renoise versions"))
+         (body (en "Currently, there's only a package definition for @code{renoise} version @code{3.4.3}. If you want to use a different Renoise version, make an issue on the project page and I'll add a definition for that version. tank uuu :3"))))
