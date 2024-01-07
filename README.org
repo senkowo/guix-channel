@@ -59,7 +59,7 @@ This will install Renoise verison 3.4.3 in the default profile using an installe
 Some explanations:
 - The =--with-source=renoise@<version>== transformation essentially adds the file found at =<path>= to the guix store, similar to what the command =guix download= does, but to be specifically used for building the specified package.
 - You should specify the exact Renoise version, because otherwise, if I add a new Renoise version to the channel, you will update to a newer Renoise version, but using an older Renoise installer, which might be problematic.
-  - (Does anyone know how this could be mitigated in the renoise package definition? Maybe in the package definiton, during the install phase, search the file =install.sh= for string ="^RENOISE_VERSION=(.*)$"= and compare the extracted substring version with the guix package's version? I'm not sure how that would be implemented...)
+  - (Does anyone know how this could be mitigated in the renoise package definition? Maybe in the package definiton, during the install phase, search the file =install.sh= for string ="^RENOISE_VERSION=(.*)$"= and compare the extracted substring version with the package's version? I'm not sure how that would be implemented...)
 
 *** Using Scheme
 
