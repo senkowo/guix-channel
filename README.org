@@ -87,7 +87,7 @@ Personally, I like to add it to a pre-existing manifest in another file, like th
 #+begin_src scheme
 
   (define-public renoise-manifest
-    (cons
+    (cons*
      ;; renoise pacakge
      renoise-custom
      ;; misc
