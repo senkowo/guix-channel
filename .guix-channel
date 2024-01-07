@@ -3,6 +3,7 @@
 (channel
  (version 0)
  (url "https://github.com/senkowo/guix-channel")
+ (news-file "news.txt")
  (dependencies
   (channel
    (name nonguix)
