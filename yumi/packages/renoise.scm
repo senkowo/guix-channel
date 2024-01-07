@@ -92,7 +92,7 @@
                                
                                (setenv "HOME" "/tmp")
                                (setenv "XDG_DATA_HOME" share)
-                               
+
                                ;; Fixes file permissions
                                ;; (function below is a wrapper around find-files)
                                ;; (similar to "$ find A -type B -name C -exec chmod D {} \;")
@@ -187,5 +187,5 @@
                    "19hbfy5mwg9ywabcpbnv31caqy224si7cwpa84x1dwal2b360nix" ; arm64
                    "0hiyq4p2d3nwjzaa32zdkrcld51hx34wf97qmf2kqhkmdxs26i6m")) ; armhf
 
-renoise-3.4.3
+;; renoise-3.4.3
 
