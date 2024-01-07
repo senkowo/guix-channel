@@ -15,7 +15,7 @@ Add this channel to =~/.config/guix/channels.scm= like this:
 
 (cons* (channel
         (name 'yumi)
-        (url "https://github.com/senkowo/channel")
+        (url "https://github.com/senkowo/guix-channel")
         ;; Enable signature verification:
         (introduction
          (make-channel-introduction
