@@ -46,7 +46,7 @@ To install Renoise from an installer saved on your system (necessary for the pai
 
 *** Using command-line arguments
 
-The command:
+Command to install:
 
 ~$ guix install --with-source=renoise@<version>=<path-to-installer> renoise@<version>~
 
@@ -59,7 +59,7 @@ This will install Renoise verison 3.4.3 in the default profile using an installe
 Some explanations:
 - The =--with-source=renoise@<version>== transformation essentially adds the file found at =<path>= to the guix store, similar to what the command =guix download= does, but to be specifically used for building the specified package.
 - You should specify the exact Renoise version, because otherwise, if I add a new Renoise version to the channel, you will update to a newer Renoise version, but using an older Renoise installer, which might be problematic.
-  - (Does anyone know how this could be mitigated in the renoise package definition? Maybe in the package definiton, during the install phase, search the file =install.sh= for string ="^RENOISE_VERSION=(.*)$"= and compare the extracted substring version with the guix package's version? I'm not sure how that would be implemented...)
+  - (Does anyone know how this could be mitigated in the renoise package definition? More info under [[*Contributing][Contributing]].)
 
 *** Using Scheme
 
@@ -87,7 +87,7 @@ Personally, I like to add it to a pre-existing manifest in another file, like th
 #+begin_src scheme
 
   (define-public renoise-manifest
-    (cons
+    (cons*
      ;; renoise pacakge
      renoise-custom
      ;; misc
@@ -145,17 +145,109 @@ If you created a Renoise package variant that applies the transformation, the co
 
 The package name specified after =--with-source== and at the very end must match your package variant's name.
 
+** Setting up Renoise
+
+Do the following to make sure everything is set up:
+
+*** Check CPU frequency governor
+
+#+begin_src sh
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+#+end_src
+If this returns something other than =performance=, it means CPU frequency scaling is enabled, and should be disabled for Renoise to work properly. More info here: https://wiki.linuxaudio.org/wiki/system_configuration#cpu_frequency_scaling
+
+**** On Guix System:
+I was able to fix this using the following code in my system configuration:
+#+begin_src scheme
+  (service tlp-service-type
+           (tlp-configuration
+            ;; for renoise/music DAW
+            (cpu-scaling-governor-on-ac (list "performance"))
+            (cpu-scaling-governor-on-bat (list "performance"))
+            (energy-perf-policy-on-ac "performance")
+            (energy-perf-policy-on-bat "performance")))
+#+end_src
+If you dont use =tlp= or dont have a battery power supply on your computer, you shouldn't copy this code into your configuration.
+
+*** Check PAM audio configuration
+
+**** On non-guix systems: 
+Check if either =/etc/security/limits.d/audio.conf= exists or if running =grep -E "^[^#]+(rtprio).*$" /etc/security/limits.conf= returns some value. If so, PAM should be installed and configured for realtime audio applications. If you still have problems with ALSA or Jack (like crackles or too high latencies) look at https://wiki.linuxaudio.org/wiki/system_configuration#limitsconfaudioconf for help.
+
+**** On Guix System:
+In your =operating-system= declaration, make sure you have something like:
+#+begin_src scheme
+  (groups (cons (user-group (system? #t) (name "realtime"))
+                %base-groups))
+#+end_src
+
+As well as:
+#+begin_src scheme
+  (users (cons*
+          (user-account
+           (name "nya")
+           (comment "Nya")
+           (group "users")
+           (home-directory "/home/nya")
+           (supplementary-groups '("wheel"
+                                   "audio" "video"
+                                   "netdev"
+                                   "kvm" "docker"
+                                   "realtime"))) ; add the newly created group to user
+          %base-user-accounts))
+#+end_src
+(note the ="realtime"= near the bottom (we created this group with the first code block))
+
+And also:
+#+begin_src scheme
+  (service pam-limits-service-type
+           (list
+            (pam-limits-entry "@realtime" 'both 'rtprio 99)
+            ;; 'nice value adjusts priority of audio/video processes...
+            ;; (pam-limits-entry "@realtime" 'both 'nice 0)
+            (pam-limits-entry "@realtime" 'both 'memlock 'unlimited)))
+#+end_src
+(this configures PAM for realtime audio applications for users under the =realtime= group (I think))
+
+*** Further configuration
+
+You'll want to set up Jack or pure Alsa to get Renoise to work. If you're using Pulseaudio, you will either need to do some heavy hacking, or install Pipewire. If you're using Guix System, the best approach is to set up Guix Home and install the Pipewire home service (you would then launch Renoise with =pw-jack renoise= to provide a Jack interface).
+
++ Some resources:
+  - Info on Jack on Linux:
+https://bcacciaaudio.com/2018/01/30/audio-music-production-in-linux-part-1-setting-up-jack-audio/
+  - Getting Jack and Pulseaudio to work together:
+https://jackaudio.org/faq/pulseaudio_and_jack.html
+  - Daviwil's pulseaudio config
+https://codeberg.org/daviwil/dotfiles/src/branch/master/.config/pulse
+  - Article on Music production on Guix System:
+https://guix.gnu.org/en/blog/2020/music-production-on-guix-system/
+
+** Need help getting Renoise to work on Guix System?
+
+Post an issue and I'll try to help out. There's a good chance I've faced a similar issue.
+
 * Contributing
 
 I'm not extremely savvy with Guix or scheme, so let me know if there are any ways in which I can improve this channel! :3
 
 For example:
 - making available certain Renoise versions
-- advice on writing package definitions
 - channel not working
+- improving package definitions, but especially Renoise's
+  + To fix/implement in Renoise package: 
+    1. Check CPU frequency governor and PAM audio configuration.
+       - in =installer.sh=, it greps paths like =/sys/devices/system/cpu/...=, which doesn't seem to be a path accessible to Guix during package building (or maybe just the install phase perhaps).
+    2. Check if the installer version and the package version matches. 
+       - Brainstorming ideas: maybe in the package definiton, during the install phase, search the file =install.sh= for string ="^RENOISE_VERSION=(.*)$"= and compare the extracted substring version with the package's version? I'm not sure how that would be implemented...
 
 * References
+- https://www.renoise.com: Renoise homepage.
 - https://gitlab.com/guix-gaming-channels/games: on avoiding guix gc from deleting sources, and all around a great resource on non-free guix packages.
+- https://bcacciaaudio.com/2018/01/30/audio-music-production-in-linux-part-1-setting-up-jack-audio/: general info regarding audio on Linux and how to set up Jack.
+- https://jackaudio.org/faq/pulseaudio_and_jack.html: the available options in trying to get Jack and pulseaudio to work together.
+- https://codeberg.org/daviwil/dotfiles/src/branch/master/.config/pulse: Daviwil's pulseaudio config
+- https://guix.gnu.org/en/blog/2020/music-production-on-guix-system/: Article on music production on Guix.
 
 * Notes to self
 - Does not specifying package version to transformation break things when the renoise package definition is updated?
