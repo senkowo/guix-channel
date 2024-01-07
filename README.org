@@ -12,17 +12,17 @@ Programs provided by this channel:
 Add this channel to =~/.config/guix/channels.scm= like this:
 
 #+begin_src scheme
-
-(cons* (channel
-        (name 'yumi)
-        (url "https://github.com/senkowo/guix-channel")
-        ;; Enable signature verification:
-        (introduction
-         (make-channel-introduction
-          "d1256cf136ced2ed4a3736417fbced678bacb1f6"
-          (openpgp-fingerprint
-           "864D 7D40 2260 D1A5 E9B9  AC9B B703 FEDE 1CF1 30EA"))))
-       %default-channels)
+  
+  (cons* (channel
+          (name 'yumi)
+          (url "https://github.com/senkowo/guix-channel")
+          ;; Enable signature verification:
+          (introduction
+           (make-channel-introduction
+            "d1256cf136ced2ed4a3736417fbced678bacb1f6"
+            (openpgp-fingerprint
+             "864D 7D40 2260 D1A5 E9B9  AC9B B703 FEDE 1CF1 30EA"))))
+         %default-channels)
 
 #+end_src
 
