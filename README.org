@@ -172,7 +172,7 @@ If you dont use =tlp= or dont have a battery power supply on your computer, you 
 *** Check PAM audio configuration
 
 **** On foreign distros: 
-Check if either =/etc/security/limits.d/audio.conf= exists or if running =grep -E "^[^#]+(rtprio).*$" /etc/security/limits.conf= returns some value. If so, PAM should be installed and configured for realtime audio applications. If you still have problems with ALSA or Jack (like crackles or too high latencies) look at https://wiki.linuxaudio.org/wiki/system_configuration#limitsconfaudioconf for help.
+Check if either =/etc/security/limits.d/audio.conf= exists or if running =grep -E "^[^#]+(rtprio).*$" /etc/security/limits.conf= returns some value. If so, PAM should be installed and configured for realtime audio applications. 
 
 **** On Guix System:
 In your =operating-system= declaration, make sure you have something like:
