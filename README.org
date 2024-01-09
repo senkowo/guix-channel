@@ -235,7 +235,7 @@ For example:
     1. Check CPU frequency governor and PAM audio configuration.
        - in =installer.sh=, it greps paths like =/sys/devices/system/cpu/...=, which doesn't seem to be a path accessible to Guix during package building (or maybe just the install phase perhaps).
     2. Check if the installer version and the package version matches. 
-       - Brainstorming ideas: maybe in the package definiton, during the install phase, search the file =install.sh= for string ~'^RENOISE_VERSION=(.*)$'~ and compare the extracted substring version with the package's version? I'm not sure how that would be implemented...
+       - Brainstorming ideas: maybe in the package definiton, during the install phase, search the file =install.sh= for string ='^RENOISE_VERSION=(.*)$'= and compare the extracted substring version with the package's version? I'm not sure how that would be implemented...
 
 * References
 - https://www.renoise.com: Renoise homepage.
