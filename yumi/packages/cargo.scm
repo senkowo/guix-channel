@@ -1,4 +1,4 @@
-(define-module (yumi packages editors)
+(define-module (yumi packages cargo)
   #:use-module (guix build-system cargo)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -65,27 +65,27 @@
 
 ;; Dependencies for Hearth:
 
-(define-public rust-bytemuck-1.13
+(define rust-bytemuck-1.13
   (package
     (inherit rust-bytemuck-1)
     (version "1.13")))
 
-(define-public rust-flume-0.11
+(define rust-flume-0.11
   (package
     (inherit rust-flume-0.10)
     (version "0.11")))
 
-(define-public rust-ouroboros-0.18
+(define rust-ouroboros-0.18
   (package
     (inherit rust-ouroboros-0.15)
     (version "0.18")))
 
-(define-public rust-tracing-0.1.37
+(define rust-tracing-0.1.37
   (package
     (inherit rust-tracing-0.1)
     (version "0.1.37")))
 
-(define-public rust-wasmtime-11    ; doesn't exist in gnu/packages/crates.io ?
+(define rust-wasmtime-11    ; doesn't exist in gnu/packages/crates.io ?
   (package
     (name "rust-wasmtime")
     (version "11")
