@@ -10,6 +10,14 @@
   #:use-module (gnu packages pkg-config) ; pkg-config native-inputs ?
   )
 
+;;; Commentary:
+
+;; These are almost all the dependencies that are needed by Hearth.
+;; Because of the limited number and variety of guix cargo packages
+;; in the main repos, a lot of them had to be defined here.
+;; There are a lot of dependencies here.
+;; Most of these were created using "guix import cargo <pkg>@<ver>".
+
 ;;; Hearth dependency
 (define-public rust-bytemuck-1.13
   (package

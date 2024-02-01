@@ -68,35 +68,35 @@
       (description "Hearth is a shared, always-on execution environment for constructing 3D virtual spaces from the inside.")
       (license license:gpl3+))))
 
-;; (define rust-font-mud-9999
-;;   (package
-;;     (name "rust-font-mud")
-;;     (version "9999")
-;;     (source
-;;      (origin
-;;        (method git-fetch)
-;;        (uri (git-reference
-;;              (url "https://git.disroot.org/hearth/font-mud")
-;;              (commit "c1e6b66f459e32ee90de2a1c29b8a2124a1a9bad")))
-;;        ;; file-name?
-;;        ;; https://guix.gnu.org/cookbook/en/html_node/Extended-example.html
-;;        (file-name (string-append name "-" version ".tar.gz"))
-;;        (sha256
-;;         (base32 "19a9lra546f91a3lvjjr7y9yah8q2df8754n5ch9vwdm5hdplf54"))))
-;;     (build-system cargo-build-system)
-;;     (arguments
-;;      `(#:cargo-inputs
-;;        (
-;;         ("rust-glam" ,rust-glam-0.20)
-;;         ("rust-ttf-parser" ,rust-ttf-parser-0.19) ; needs 0.19.2
-;;         ("rust-rect-packer" ,rust-rect-packer-0.2.1)
-;;         ("msdfgen-rs-9999" ,msdfgen-rs-9999)) ; custom depend
-;;        #:cargo-development-inputs
-;;        (
-;;         ("rust-png" ,rust-png-0.17))))
-;;     (home-page "https://git.disroot.org/hearth/font-mud")
-;;     (synopsis "A library for dynamically generating and packing MSDFs of text glyphs")
-;;     (description "A library for dynamically generating and packing MSDFs of text glyphs")
-;;     (license license:asl2.0)))
+(define rust-font-mud-9999
+  (package
+    (name "rust-font-mud")
+    (version "9999")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.disroot.org/hearth/font-mud")
+             (commit "c1e6b66f459e32ee90de2a1c29b8a2124a1a9bad")))
+       ;; file-name?
+       ;; https://guix.gnu.org/cookbook/en/html_node/Extended-example.html
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "19a9lra546f91a3lvjjr7y9yah8q2df8754n5ch9vwdm5hdplf54"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (
+        ("rust-glam" ,rust-glam-0.20)
+        ("rust-ttf-parser" ,rust-ttf-parser-0.19) ; needs 0.19.2
+        ("rust-rect-packer" ,rust-rect-packer-0.2.1)
+        ("msdfgen-rs-9999" ,msdfgen-rs-9999)) ; custom depend
+       #:cargo-development-inputs
+       (
+        ("rust-png" ,rust-png-0.17))))
+    (home-page "https://git.disroot.org/hearth/font-mud")
+    (synopsis "A library for dynamically generating and packing MSDFs of text glyphs")
+    (description "A library for dynamically generating and packing MSDFs of text glyphs")
+    (license license:asl2.0)))
 
 hearth-9999
