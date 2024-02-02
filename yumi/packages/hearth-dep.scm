@@ -4,10 +4,17 @@
   #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (gnu packages)
+  ;; #:use-module (gnu packages)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crates-graphics) ; rust-image ?
-  #:use-module (gnu packages pkg-config) ; pkg-config native-inputs ?
+  #:use-module (gnu packages crates-gtk)
+  
+  ;; #:use-module (gnu packages pkg-config) ; pkg-config native-inputs ?
+  ;; #:use-module (gnu packages llvm) ; test (clang)
+  ;; #:use-module (gnu packages cmake) ; test (cmake-minimal)
+  ;; #:use-module (gnu packages gcc) ; test (cmake-minimal)
+  ;; #:use-module (guix build utils)
+  ;; #:use-module (srfi srfi-1)
   )
 
 ;;; Commentary:
@@ -1567,6 +1574,545 @@ encoding.")
      "This package provides a low-level @code{WebAssembly} encoder.")
     (license (list license:asl2.0))))
 
-;;; Hearth dependency: plugins/terminal
+;;; Hearth dependency module: plugins/terminal
 
+;; Hearth: plugins/terminal dependency
+;; Is defined in plugins/terminal/Cargo.toml, and uses a git url
+;; instead of crates.io. This makes cargo-build-system try to fetch
+;; the git repo during the build phase, which cannot be done. All
+;; dependencies must be resolved manually with Guix, before the build
+;; phase. 
+(define rust-font-mud-9999
+  (package
+    (name "rust-font-mud")
+    (version "9999")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.disroot.org/hearth/font-mud")
+             (commit "c1e6b66f459e32ee90de2a1c29b8a2124a1a9bad")))
+       ;; file-name?
+       ;; https://guix.gnu.org/cookbook/en/html_node/Extended-example.html
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "19a9lra546f91a3lvjjr7y9yah8q2df8754n5ch9vwdm5hdplf54"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(;;#:install-source? #f
+       ;; #:tests? #f
+       #:cargo-inputs
+       (("rust-glam" ,rust-glam-0.20)
+        ("rust-ttf-parser" ,rust-ttf-parser-0.19)
+        ("rust-rect-packer" ,rust-rect-packer-0.2)
+        ("rust-msdfgen" ,rust-msdfgen-rs-9999) ; custom depend
+        ;; NEED ("rust-msdfgen-sys" ,msdfgen-rs-sys-9999)
+        )
+       #:cargo-development-inputs
+       (("rust-png" ,rust-png-0.17))
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'check-status
+           (lambda _
+             (invoke "pwd")
+             (invoke "ls" "-al")
+             (invoke "ls" "-al" "guix-vendor"))))
+       ;; #:phases
+       ;; (modify-phases %standard-phases
+       ;;  (add-after 'unpack 'dont-fetch-msdfgen
+       ;;    (lambda _
+       ;;      (substitute* "Cargo.toml"
+       ;;        (("^\\[dependencies.msdfgen\\].*") "msdfgen = \"9999\"")
+       ;;        (("^git.*hearth-rs/msdfgen-rs.*") "")
+       ;;        (("^branch.*fix-mac-builds.*") "")
+       ;;        (("^default-features.*false.*") "")
+       ;;        (("^features.*ttf-parser.*png.*") ""))
+       ;;      (invoke "cat" "Cargo.toml"))))
+       ))
+    (home-page "https://git.disroot.org/hearth/font-mud")
+    (synopsis "A library for dynamically generating and packing MSDFs of text glyphs")
+    (description "A library for dynamically generating and packing MSDFs of text glyphs")
+    (license license:asl2.0)))
+
+;; dependency for rust-font-mud-9999
+(define-public rust-ttf-parser-0.19
+  (package
+    (name "rust-ttf-parser")
+    (version "0.19.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ttf-parser" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1lcb9cv2wrync22al2d1qj2hlgilyilkkdj8irkc47riv0c47mj9"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-development-inputs (("rust-base64" ,rust-base64-0.13)
+                                   ("rust-pico-args" ,rust-pico-args-0.5)
+                                   ("rust-xmlwriter" ,rust-xmlwriter-0.1))))
+    (home-page "https://github.com/RazrFalcon/ttf-parser")
+    (synopsis "A high-level, safe, zero-allocation TrueType font parser.")
+    (description
+     "This package provides a high-level, safe, zero-allocation @code{TrueType} font
+parser.")
+    (license (list license:expat license:asl2.0))))
+
+;; dependency for rust-ttf-parser-0.19
+(define-public rust-pico-args-0.5
+  (package
+    (name "rust-pico-args")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pico-args" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "05d30pvxd6zlnkg2i3ilr5a70v3f3z2in18m67z25vinmykngqav"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/RazrFalcon/pico-args")
+    (synopsis "An ultra simple CLI arguments parser.")
+    (description "An ultra simple CLI arguments parser.")
+    (license license:expat)))
+
+;; dependency for rust-ttf-parser-0.19
+(define-public rust-xmlwriter-0.1
+  (package
+    (name "rust-xmlwriter")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "xmlwriter" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1fg0ldmkgiis6hnxpi1c9gy7v23y0lpi824bp8yp12fi3r82lypc"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/RazrFalcon/xmlwriter")
+    (synopsis "A simple, streaming XML writer.")
+    (description "This package provides a simple, streaming XML writer.")
+    (license license:expat)))
+
+
+;; dependency for rust-font-mud-9999
+(define-public rust-rect-packer-0.2
+  (package
+    (name "rust-rect-packer")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "rect_packer" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0i8wrfdgwcpdcqm7gwl6w5n5j3bnh325srj7111cq0abvbgv9zyq"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-development-inputs (("rust-image" ,rust-image-0.12)
+                                   ("rust-rand" ,rust-rand-0.3))))
+    (home-page "https://github.com/kryptan/rect_packer")
+    (synopsis
+     "A rectangle packing library. Heavily tested with random data to ensure that it always produces correct result.")
+    (description
+     "This package provides a rectangle packing library.  Heavily tested with random
+data to ensure that it always produces correct result.")
+    (license license:expat)))
+
+;; dependency for rust-rect-packer-0.2
+(define-public rust-image-0.12
+  (package
+    (name "rust-image")
+    (version "0.12.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "image" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0n11f0j56qkghg2x3grdi48zw5x8lgqj6kisy8bgwjc2fpdicn6r"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-byteorder" ,rust-byteorder-1)
+                       ("rust-enum-primitive" ,rust-enum-primitive-0.1)
+                       ("rust-gif" ,rust-gif-0.9)
+                       ("rust-jpeg-decoder" ,rust-jpeg-decoder-0.1)
+                       ("rust-num-iter" ,rust-num-iter-0.1)
+                       ("rust-num-rational" ,rust-num-rational-0.1)
+                       ("rust-num-traits" ,rust-num-traits-0.1)
+                       ("rust-png" ,rust-png-0.6)
+                       ("rust-scoped-threadpool" ,rust-scoped-threadpool-0.1))
+       #:cargo-development-inputs (("rust-glob" ,rust-glob-0.2)
+                                   ("rust-num-complex" ,rust-num-complex-0.1))))
+    (home-page "https://github.com/image-rs/image")
+    (synopsis
+     "Imaging library. Provides basic image processing and encoders/decoders for common image formats.")
+    (description
+     "Imaging library.  Provides basic image processing and encoders/decoders for
+common image formats.")
+    (license license:expat)))
+
+;; dependency (custom) for rust-font-mud-9999 (a weird one)
+(define rust-msdfgen-rs-9999
+  (package
+    (name "rust-msdfgen-rs")
+    (version "9999")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hearth-rs/msdfgen-rs")
+             (commit "ac254fb7a3ffc9a8e4ca9acf7929b5128b8281e6") ;fix
+             ;; for git-submodule
+             (recursive? #t)))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "045zkvivx9f4iqhqnr3qhvpn99q5yq1vsq19s45z7zacc486k5cm"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f
+       #:cargo-inputs
+       (;;("msdfgen-rs-sys" ,msdfgen-rs-sys-9999)
+        ("rust-bytemuck-extern-create-alloc" ,rust-bytemuck-extern-create-alloc-1)
+        ("rust-ttf-parser" ,rust-ttf-parser-0.19)
+        ("rust-typeface" ,rust-typeface-0.3)
+        ("rust-font" ,rust-font-0.15)
+        ("rust-freetype-rs" ,rust-freetype-rs-0.32)
+        ("rust-png" ,rust-png-0.17)
+        ;;
+        ("rust-cc" ,rust-cc-1) ; msdfgen-sys depend
+        ;;
+        ("rust-bindgen" ,rust-bindgen-0.63) ; msdfgen-sys depend
+        )
+       #:cargo-development-inputs
+       (("rust-all-asserts" ,rust-all-asserts-2)
+        ("rust-ttf-parser" ,rust-ttf-parser-0.19)
+        ("rust-notosans" ,rust-notosans-0.1)
+        ("rust-material-icons" ,rust-material-icons-0.2))
+       #:phases
+       (modify-phases %standard-phases
+         ;; otherwise error from ./sys/lib/freetype/win32/freetype.lib
+         ;; (pre-compiled/generated binary)
+         (delete 'check-for-pregenerated-files))
+       #:features '("ttf-parser" "png")
+       ))
+    ;; (inputs (list clang gcc)) ; test 
+    ;; (native-inputs
+    ;;  (list cmake-minimal)) ; test
+    (home-page "https://github.com/hearth-rs/msdfgen-rs")
+    (synopsis "Rust bindings to msdfgen library.")
+    (description "Rust bindings to msdfgen library.")
+    (license license:asl2.0)))
+
+;; (define-public)
+
+;; dependency for msdfgen-rs-9999
+(define-public rust-bytemuck-extern-create-alloc-1
+  (package
+    (name "rust-bytemuck-extern-create-alloc")
+    (version "1.14.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "bytemuck" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1n9bjrxhngiv0lq05f7kl0jw5wyms4z1vqv7q6a2nks01xh9097d"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-bytemuck-derive" ,rust-bytemuck-derive-1))
+       #:features '("extern_create_alloc")))
+    (home-page "https://github.com/Lokathor/bytemuck")
+    (synopsis "A crate for mucking around with piles of bytes.")
+    (description
+     "This package provides a crate for mucking around with piles of bytes.")
+    (license (list license:zlib license:asl2.0 license:expat))))
+
+;; dependency for msdfgen-rs-9999
+(define-public rust-typeface-0.3
+  (package
+    (name "rust-typeface")
+    (version "0.3.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "typeface" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "06h3201c1l5iqv1a74zcbd6j5j6538w44dlfd29j8h5c6n3dqjjd"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/bodoni/typeface")
+    (synopsis "The package provides a foundation for parsing fonts.")
+    (description "The package provides a foundation for parsing fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for msdfgen-rs-9999
+(define-public rust-font-0.15
+  (package
+    (name "rust-font")
+    (version "0.15.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "font" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1al23fkbb845a8mzc0g4gpr3xkpddx8sdjk90l3s02h556n7mbjx"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-opentype" ,rust-opentype-0.24)
+                       ("rust-typeface" ,rust-typeface-0.4)
+                       ("rust-webtype" ,rust-webtype-0.2))))
+    (home-page "https://github.com/bodoni/font")
+    (synopsis "The package provides a builder and parser of fonts.")
+    (description "The package provides a builder and parser of fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for rust-font-0.15
+(define-public rust-webtype-0.2
+  (package
+    (name "rust-webtype")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "webtype" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0wpwpg1h7y3dyb71php9fcjbhf5bjlxdvwglwkmbg22vvcyblr0k"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-brotli-decompressor" ,rust-brotli-decompressor-2)
+                       ("rust-opentype" ,rust-opentype-0.24)
+                       ("rust-typeface" ,rust-typeface-0.4))))
+    (home-page "https://github.com/bodoni/webtype")
+    (synopsis
+     "The package provides a parser for fonts in Web Open Font Format.")
+    (description
+     "The package provides a parser for fonts in Web Open Font Format.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for msdfgen-rs-9999
+(define-public rust-all-asserts-2
+  (package
+    (name "rust-all-asserts")
+    (version "2.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "all_asserts" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0051psbhdpz4zmm68bjzmmy2p29x6shws0x1rmsc4mqhrbqclxya"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/ohsayan/all_asserts")
+    (synopsis
+     "A crate for multiple types of asserts that don't exist in the standard library")
+    (description
+     "This package provides a crate for multiple types of asserts that don't exist in
+the standard library")
+    (license license:asl2.0)))
+
+;; dependency for msdfgen-rs-9999
+(define-public rust-notosans-0.1
+  (package
+    (name "rust-notosans")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "notosans" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0p10x0hlhy710j33bk6l3l2yyd7j38wahxh5d7abv9n8py5mfk80"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/nannou-org/notosans")
+    (synopsis
+     "A simple crate providing several of Google's Noto Sans true type fonts as slices of bytes.")
+    (description
+     "This package provides a simple crate providing several of Google's Noto Sans
+true type fonts as slices of bytes.")
+    (license (list license:expat license:asl2.0))))
+
+;; dependency for msdfgen-rs-9999
+(define-public rust-material-icons-0.2
+  (package
+    (name "rust-material-icons")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "material-icons" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1cx4j02fnc8z3plw3chqxyyz0pdq5kbdi5bfm3hf504whnjnpink"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-enum-iterator" ,rust-enum-iterator-0.8))))
+    (home-page "https://github.com/fschutt/material-icons")
+    (synopsis
+     "Strongly-typed codepoint mappings for the Google Material Icons font")
+    (description
+     "Strongly-typed codepoint mappings for the Google Material Icons font")
+    (license license:asl2.0)))
+
+;; dependency for rust-material-icons-0.2
+(define-public rust-enum-iterator-0.8
+  (package
+    (name "rust-enum-iterator")
+    (version "0.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "enum-iterator" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1sgr7yg9zgaj5gp5ilwbla8qbnm8b8kz1aychq0bf3mc8zgx2lr9"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-enum-iterator-derive" ,rust-enum-iterator-derive-0.8))))
+    (home-page "https://github.com/stephaneyfx/enum-iterator")
+    (synopsis
+     "Tools to iterate over all values of a type (e.g. all variants of an enumeration)")
+    (description
+     "This package provides tools to iterate over all values of a type (e.g. all
+variants of an enumeration)")
+    (license license:bsd-0)))
+
+;; dependends on rust-enum-iterator-0.8
+(define-public rust-enum-iterator-derive-0.8
+  (package
+    (name "rust-enum-iterator-derive")
+    (version "0.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "enum-iterator-derive" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1605h8n4q0mxgk87cf02728k5pmp906qa4qsd57b1w2rjfgnjn49"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-proc-macro2" ,rust-proc-macro2-1)
+                       ("rust-quote" ,rust-quote-1)
+                       ("rust-syn" ,rust-syn-1))))
+    (home-page "https://github.com/stephaneyfx/enum-iterator")
+    (synopsis "Procedural macro to derive Sequence")
+    (description "Procedural macro to derive Sequence")
+    (license license:bsd-0)))
+
+;; dependency for msdfgen-rs-9999
+(define-public rust-opentype-0.24
+  (package
+    (name "rust-opentype")
+    (version "0.24.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "opentype" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0qc9cb0g9kabxnhqgmcnm3a84x454q2a6nbxl78w54arw9r6sj56"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-postscript" ,rust-postscript-0.17)
+                       ("rust-truetype" ,rust-truetype-0.42)
+                       ("rust-typeface" ,rust-typeface-0.4))))
+    (home-page "https://github.com/bodoni/opentype")
+    (synopsis "The package provides a builder and parser of OpenType fonts.")
+    (description
+     "The package provides a builder and parser of @code{OpenType} fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for rust-opentype-0.24 and rust-font-0.15
+(define-public rust-typeface-0.4
+  (package
+    (name "rust-typeface")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "typeface" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0fkvcix1jfbkl07hy2iwlj2nx9alkpwairsmvyd146xf024cpj81"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/bodoni/typeface")
+    (synopsis "The package provides a foundation for parsing fonts.")
+    (description "The package provides a foundation for parsing fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for opentype-0.24
+(define-public rust-postscript-0.17
+  (package
+    (name "rust-postscript")
+    (version "0.17.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "postscript" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1wmyja3grcb35p1vrcywyvs050gv6hgclqhm8aid9sbhbapna3db"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-typeface" ,rust-typeface-0.3))
+       #:cargo-development-inputs (("rust-random" ,rust-random-0.12))))
+    (home-page "https://github.com/bodoni/postscript")
+    (synopsis "The package provides a parser of PostScript fonts.")
+    (description "The package provides a parser of @code{PostScript} fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for opentype-0.24
+(define-public rust-truetype-0.42
+  (package
+    (name "rust-truetype")
+    (version "0.42.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "truetype" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "02qhqb6gfkx1afby4k93db3rg761jh7p84xcik7k462syf52glcq"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-typeface" ,rust-typeface-0.3))))
+    (home-page "https://github.com/bodoni/truetype")
+    (synopsis "The package provides a builder and parser of TrueType fonts.")
+    (description
+     "The package provides a builder and parser of @code{TrueType} fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for msdfgen-rs-9999 
+(define-public rust-cc-1
+  (package
+    (name "rust-cc")
+    (version "1.0.83")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "cc" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1l643zidlb5iy1dskc5ggqs4wqa29a02f44piczqc8zcnsq4y5zi"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-jobserver" ,rust-jobserver-0.1)
+                       ("rust-libc" ,rust-libc-0.2))
+       #:cargo-development-inputs (("rust-tempfile" ,rust-tempfile-3))))
+    (home-page "https://github.com/rust-lang/cc-rs")
+    (synopsis
+     "A build-time dependency for Cargo build scripts to assist in invoking the native
+C compiler to compile native C code into a static archive to be linked into Rust
+code.
+")
+    (description
+     "This package provides a build-time dependency for Cargo build scripts to assist
+in invoking the native C compiler to compile native C code into a static archive
+to be linked into Rust code.")
+    (license (list license:expat license:asl2.0))))
+
+;; rust-msdfgen-rs-9999
+rust-font-mud-9999
 
