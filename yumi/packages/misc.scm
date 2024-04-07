@@ -4,6 +4,8 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
   #:use-module (gnu packages gcc)
+  #:use-module (gnu packages wm)
+  #:use-module (gnu packages xdisorg)
   #:use-module (srfi srfi-1)
   ;; test
   #:use-module ((nonguix licenses) #:prefix license:)
@@ -56,40 +58,10 @@
    (home-page "https://github.com/liuyug/alltray")
    (license gpl3+)))
 
-
 (define-public cagebreak-xkb-fix
   (package
-    (name "cagebreak")
-    (version "2.3.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/project-repo/cagebreak")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0firjpp7qw4kb2h1zh5pv5k0xf0jvx6x0r0s7j6y7dhlh5j0s00q"))))
-    (build-system meson-build-system)
-    (arguments
-     (list
-      #:configure-flags #~(list "-Dxwayland=true" "-Dman-pages=true")
-      ;; XXX: Running cagebreak tests need more tools, such as: clang-format,
-      ;; shellcheck, git, gnupg ...
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-data-dir
-            (lambda _
-              (substitute* '("cagebreak.c" "meson.build")
-                (("/etc/") (string-append #$output "/etc/"))
-                (("/usr/share/") (string-append #$output "/usr/share/"))))))))
-    (native-inputs (list pkg-config scdoc))
-    (inputs (list libevdev pango wlroots libxkbcommon))
-    (home-page "https://github.com/project-repo/cagebreak")
-    (synopsis "Tiling wayland compositor inspired by ratpoison")
-    (description
-     "@command{cagebreak} is a slim, keyboard-controlled, tiling compositor
-for wayland conceptually based on the X11 window manager
-@command{ratpoison}.")
-    (license license:expat)))
+    (inherit cagebreak)
+    (name "cagebreak-xkb-fix")
+    (inputs
+     (modify-inputs (package-inputs cagebreak)
+                    (append libxkbcommon)))))
