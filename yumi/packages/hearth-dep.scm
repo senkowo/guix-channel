@@ -1582,10 +1582,10 @@ encoding.")
 ;; the git repo during the build phase, which cannot be done. All
 ;; dependencies must be resolved manually with Guix, before the build
 ;; phase. 
-(define rust-font-mud-9999
+(define rust-font-mud-0.0
   (package
     (name "rust-font-mud")
-    (version "9999")
+    (version "0.0")
     (source
      (origin
        (method git-fetch)
@@ -1594,7 +1594,8 @@ encoding.")
              (commit "c1e6b66f459e32ee90de2a1c29b8a2124a1a9bad")))
        ;; file-name?
        ;; https://guix.gnu.org/cookbook/en/html_node/Extended-example.html
-       (file-name (string-append name "-" version ".tar.gz"))
+       ;; (file-name (string-append name "-" version ".tar.gz"))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "19a9lra546f91a3lvjjr7y9yah8q2df8754n5ch9vwdm5hdplf54"))))
     (build-system cargo-build-system)
@@ -1605,24 +1606,30 @@ encoding.")
        (("rust-glam" ,rust-glam-0.20)
         ("rust-ttf-parser" ,rust-ttf-parser-0.19)
         ("rust-rect-packer" ,rust-rect-packer-0.2)
-        ("rust-msdfgen" ,rust-msdfgen-rs-9999) ; custom depend
+        ;; ("rust-msdfgen" ,rust-msdfgen-0.0) ; custom depend
         ;; NEED ("rust-msdfgen-sys" ,msdfgen-rs-sys-9999)
+        ("rust-msdfgen" ,rust-msdfgen-9999)
+        ;; ("rust-msdfgen-sys" ,rust-msdfgen-sys-0.2)
         )
        #:cargo-development-inputs
        (("rust-png" ,rust-png-0.17))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'check-status
-           (lambda _
-             (invoke "pwd")
-             (invoke "ls" "-al")
-             (invoke "ls" "-al" "guix-vendor"))))
+       ;; #:phases
+       ;; (modify-phases %standard-phases
+       ;;   (add-before 'build 'check-status
+       ;;     (lambda _
+       ;;       (invoke "pwd")
+       ;;       (invoke "ls" "-al")
+       ;;       (invoke "ls" "-al" "guix-vendor"))))
        ;; #:phases
        ;; (modify-phases %standard-phases
        ;;  (add-after 'unpack 'dont-fetch-msdfgen
        ;;    (lambda _
        ;;      (substitute* "Cargo.toml"
-       ;;        (("^\\[dependencies.msdfgen\\].*") "msdfgen = \"9999\"")
+       ;;        (("(^\\[dependencies\\].*)" all)
+       ;;         (string-append all
+       ;;                        "msdfgen = \"0.2\"\n"
+       ;;                        "msdfgen-sys = \"0.2\"\n"))
+       ;;        (("^\\[dependencies.msdfgen\\].*") "")
        ;;        (("^git.*hearth-rs/msdfgen-rs.*") "")
        ;;        (("^branch.*fix-mac-builds.*") "")
        ;;        (("^default-features.*false.*") "")
@@ -1753,9 +1760,9 @@ common image formats.")
     (license license:expat)))
 
 ;; dependency (custom) for rust-font-mud-9999 (a weird one)
-(define rust-msdfgen-rs-9999
+(define rust-msdfgen-9999
   (package
-    (name "rust-msdfgen-rs")
+    (name "rust-msdfgen")
     (version "9999")
     (source
      (origin
@@ -1765,7 +1772,8 @@ common image formats.")
              (commit "ac254fb7a3ffc9a8e4ca9acf7929b5128b8281e6") ;fix
              ;; for git-submodule
              (recursive? #t)))
-       (file-name (string-append name "-" version ".tar.gz"))
+       ;; (file-name (string-append name "-" version ".tar.gz"))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "045zkvivx9f4iqhqnr3qhvpn99q5yq1vsq19s45z7zacc486k5cm"))))
     (build-system cargo-build-system)
@@ -1794,7 +1802,7 @@ common image formats.")
          ;; otherwise error from ./sys/lib/freetype/win32/freetype.lib
          ;; (pre-compiled/generated binary)
          (delete 'check-for-pregenerated-files))
-       #:features '("ttf-parser" "png")
+       #:features '("ttf-parser" "freetype-rs" "png")
        ))
     ;; (inputs (list clang gcc)) ; test 
     ;; (native-inputs
@@ -1804,7 +1812,32 @@ common image formats.")
     (description "Rust bindings to msdfgen library.")
     (license license:asl2.0)))
 
-;; (define-public)
+;; dependency for msdfgen-rs-0.0 (very weird)
+(define-public rust-msdfgen-sys-9999
+  (package
+    (name "rust-msdfgen-sys")
+    (version "9999")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hearth-rs/msdfgen-rs/tree/fix-mac-builds/sys")
+             (commit "ac254fb7a3ffc9a8e4ca9acf7929b5128b8281e6")
+             (recursive? #t)))
+       ;; (file-name (string-append name "-" version ".tar.gz"))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "045zkvivx9f4iqhqnr3qhvpn99q5yq1vsq19s45z7zacc486k5cm"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-bindgen" ,rust-bindgen-0.63)
+        ("rust-cc" ,rust-cc-1))
+       #:features '("rustdoc")))
+    (home-page "https://github.com/hearth-rs/msdfgen-rs/tree/fix-mac-builds/sys")
+    (synopsis "A package for providing unsafe bindings to msdfgen.")
+    (description "This package provides a crate for unsafe bindings to msdfgen.")
+    (license (list license:asl2.0))))
 
 ;; dependency for msdfgen-rs-9999
 (define-public rust-bytemuck-extern-create-alloc-1
@@ -1866,6 +1899,175 @@ common image formats.")
     (home-page "https://github.com/bodoni/font")
     (synopsis "The package provides a builder and parser of fonts.")
     (description "The package provides a builder and parser of fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; STANDARD rust-msdfgen package (for rust-font-mud-9999)
+(define-public rust-msdfgen-0.2
+  (package
+    (name "rust-msdfgen")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "msdfgen" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1n5v9xdlw0hzybr2p3smvpjl602gg38l1xwx58g5g25i9nkvxsli"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f
+       ;; #:cargo-build-flags '("--features" "ttf-parser" "png")
+       #:cargo-inputs (("rust-font" ,rust-font-0.10)
+                       ("rust-freetype-rs" ,rust-freetype-rs-0.32)
+                       ("rust-msdfgen-sys" ,rust-msdfgen-sys-0.2)
+                       ("rust-png" ,rust-png-0.17)
+                       ("rust-ttf-parser" ,rust-ttf-parser-0.18)
+                       ("rust-typeface" ,rust-typeface-0.2))
+       #:cargo-development-inputs (("rust-all-asserts" ,rust-all-asserts-2)
+                                   ("rust-material-icons" ,rust-material-icons-0.2)
+                                   ("rust-notosans" ,rust-notosans-0.1)
+                                   ("rust-ttf-parser" ,rust-ttf-parser-0.18))
+       #:features '("ttf-parser" "png")
+       ))
+    (home-page "https://github.com/katyo/msdfgen-rs")
+    (synopsis
+     "Safe bindings for msdfgen (multi-channel signed distance field generator)")
+    (description
+     "Safe bindings for msdfgen (multi-channel signed distance field generator)")
+    (license license:expat)))
+
+;; STANDARD rust-msdfgen-sys package (for rust-font-mud-9999)
+(define-public rust-msdfgen-sys-0.2
+  (package
+    (name "rust-msdfgen-sys")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "msdfgen-sys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0c1xqqhp6c3mnvpg1b7v3im2zr19hlzgk6jfbs94jq386f1shim6"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-bindgen" ,rust-bindgen-0.63)
+                       ("rust-cc" ,rust-cc-1))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'check-for-pregenerated-files))))
+    (home-page "https://github.com/katyo/msdfgen-rs")
+    (synopsis
+     "Unsafe bindings for msdfgen (multi-channel signed distance field generator)")
+    (description
+     "Unsafe bindings for msdfgen (multi-channel signed distance field generator)")
+    (license license:expat)))
+
+;; dependency for rust-msdfgen-0.2
+(define-public rust-font-0.10
+  (package
+    (name "rust-font")
+    (version "0.10.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "font" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "17p0ba9910rbk9w8c7dcmsh5209fjd0qfnmj4b09qgc6rjspf20a"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-opentype" ,rust-opentype-0.24)
+                       ("rust-postscript" ,rust-postscript-0.17)
+                       ("rust-truetype" ,rust-truetype-0.41)
+                       ("rust-typeface" ,rust-typeface-0.2))))
+    (home-page "https://github.com/bodoni/font")
+    (synopsis "The package provides a builder and parser of fonts.")
+    (description "The package provides a builder and parser of fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for rust-msdfgen-0.2
+(define-public rust-ttf-parser-0.18
+  (package
+    (name "rust-ttf-parser")
+    (version "0.18.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ttf-parser" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0cvnn99d0i7bd25m9205rikjcscfji6xzqcp90w5aqcwmmqzf286"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-development-inputs (("rust-base64" ,rust-base64-0.13)
+                                   ("rust-pico-args" ,rust-pico-args-0.5)
+                                   ("rust-xmlwriter" ,rust-xmlwriter-0.1))))
+    (home-page "https://github.com/RazrFalcon/ttf-parser")
+    (synopsis "A high-level, safe, zero-allocation TrueType font parser.")
+    (description
+     "This package provides a high-level, safe, zero-allocation @code{TrueType} font
+parser.")
+    (license (list license:expat license:asl2.0))))
+
+;; dependency for rust-msdfgen-0.2
+(define-public rust-typeface-0.2
+  (package
+    (name "rust-typeface")
+    (version "0.2.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "typeface" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "16viidah17059rhb55gki68q8xza83fv7ic4r5f0fr9vqa60wqdz"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/bodoni/typeface")
+    (synopsis
+     "The package provides a foundation for building and parsing fonts.")
+    (description
+     "The package provides a foundation for building and parsing fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for rust-msdfgen-0.2
+(define-public rust-truetype-0.41
+  (package
+    (name "rust-truetype")
+    (version "0.41.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "truetype" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1ad7cg73rja3wflg7clsvxlbki3ysdin812k2w43n2k9l2j9mr0q"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-typeface" ,rust-typeface-0.2))))
+    (home-page "https://github.com/bodoni/truetype")
+    (synopsis "The package provides a builder and parser of TrueType fonts.")
+    (description
+     "The package provides a builder and parser of @code{TrueType} fonts.")
+    (license (list license:asl2.0 license:expat))))
+
+;; dependency for rust-msdfgen-0.2
+(define-public rust-typeface-0.3
+  (package
+    (name "rust-typeface")
+    (version "0.3.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "typeface" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "18gbd4ra1qnlcm3dwr7zci4pmi6p2acww9zwp2n8g5g02sn2a23z"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/bodoni/typeface")
+    (synopsis
+     "The package provides a foundation for building and parsing fonts.")
+    (description
+     "The package provides a foundation for building and parsing fonts.")
     (license (list license:asl2.0 license:expat))))
 
 ;; dependency for rust-font-0.15
@@ -2113,6 +2315,9 @@ in invoking the native C compiler to compile native C code into a static archive
 to be linked into Rust code.")
     (license (list license:expat license:asl2.0))))
 
-;; rust-msdfgen-rs-9999
-rust-font-mud-9999
+;; rust-msdfgen-sys-0.2
+;; rust-msdfgen-0.2
+;; rust-font-mud-0.0
 
+;; rust-msdfgen-9999
+rust-msdfgen-sys-9999
