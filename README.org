@@ -247,3 +247,6 @@ For example:
 
 * Notes to self
 - Does not specifying package version to transformation actually break things when the renoise package definition is updated?
+- enable git commit signing:
+  git config --global user.signingKey <gpg --list-keys --keyid-format long>
+  git config --global commit.gpgSign true
