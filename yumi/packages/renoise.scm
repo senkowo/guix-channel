@@ -80,13 +80,18 @@
                                              '("libc" "gcc" "alsa-lib" "libx11" "libxext"))
                                        (list "Resources/AudioPluginServer_armhf"
                                              '("libc" "gcc" "alsa-lib" "libx11" "libxext"))))))
+      ;; experiments
+      ;; (#:patchelf-plan #~(match current-system
+      ;;                      ("x86_64" )
+      ;;                      ("" )
+      ;;                      ("x86_64" )))
+      
       ;; modify phases
       (list #:phases
             #~(modify-phases %standard-phases
                 (replace 'install
                   (lambda* (#:key outputs inputs #:allow-other-keys)
-                    (let* ((out #$version)
-                           (out (assoc-ref outputs "out"))
+                    (let* ((out (assoc-ref outputs "out"))
                            (share (string-append out "/share"))
                            (bin (string-append out "/bin"))
                            (lib (string-append out "/lib"))
@@ -160,10 +165,15 @@
                                     (string-append share "/man/man1"))
                       (install-file "./Installer/renoise-pattern-effects.5.gz"
                                     (string-append share "/man/man5"))
-
+                      
                       ;; wrap program with LD_LIBRARY_PATH
-                      (wrap-program (string-append out "/bin/renoise")
-                        `("LD_LIBRARY_PATH" ":" prefix (,lib))))))))))
+                      ;; (wrap-program (string-append out "/bin/renoise")
+                      ;;   `("LD_LIBRARY_PATH" ":" prefix
+                      ;;     (,(string-join
+                      ;;        (list
+                      ;;         (string-append out "/lib"))
+                      ;;        ":"))))
+                      )))))))
     (inputs
      (list alsa-lib
            `(,gcc "lib")
@@ -179,11 +189,17 @@
                                              "/License.txt")))))
 
 ;; The actual renoise packages below
+
+;; renoise-3.4.3
 (define-public renoise-3.4.3
   (renoise-builder "3.4.3"
                    "0nkyidxyp8r7jgdjld6f1bsk59927rw0n1n4j492ncwblwszmp0j" ; x86_64
                    "19hbfy5mwg9ywabcpbnv31caqy224si7cwpa84x1dwal2b360nix" ; arm64
                    "0hiyq4p2d3nwjzaa32zdkrcld51hx34wf97qmf2kqhkmdxs26i6m")) ; armhf
 
-;; renoise-3.4.3
+;; renoise-3.4.4
+(define-public renoise-3.4.4
+  (renoise-builder "3.4.4"
+                   "0ahh5jqxkaqmp9waql7gpwvisf1sbpi5n7yjl5d9qxnrq0nf4pia")) ; x86_64
+
 
