@@ -167,12 +167,12 @@
                                     (string-append share "/man/man5"))
                       
                       ;; wrap program with LD_LIBRARY_PATH
-                      ;; (wrap-program (string-append out "/bin/renoise")
-                      ;;   `("LD_LIBRARY_PATH" ":" prefix
-                      ;;     (,(string-join
-                      ;;        (list
-                      ;;         (string-append out "/lib"))
-                      ;;        ":"))))
+                      (wrap-program (string-append out "/bin/renoise")
+                        `("LD_LIBRARY_PATH" ":" prefix
+                          (,(string-join
+                             (list
+                              (string-append out "/lib"))
+                             ":"))))
                       )))))))
     (inputs
      (list alsa-lib
