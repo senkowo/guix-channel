@@ -31,10 +31,10 @@
 ;; Ettiquette: is it ettiquette to ask original project devs before submitting
 ;; package build?
 
-(define-public wideriver-1.1.0
+(define-public wideriver-1.2.0
   (package
     (name "wideriver")
-    (version "1.1.0")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)

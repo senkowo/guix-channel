@@ -200,6 +200,9 @@
 ;; renoise-3.4.4
 (define-public renoise-3.4.4
   (renoise-builder "3.4.4"
-                   "0ahh5jqxkaqmp9waql7gpwvisf1sbpi5n7yjl5d9qxnrq0nf4pia")) ; x86_64
+                   "0ahh5jqxkaqmp9waql7gpwvisf1sbpi5n7yjl5d9qxnrq0nf4pia" ; x86_64
+                   "0ahh5jqxkaqmp9waql7gpwvisf1sbpi5n7yjl5d9qxnrq0nf4pia" ; tmp
+                   "0ahh5jqxkaqmp9waql7gpwvisf1sbpi5n7yjl5d9qxnrq0nf4pia" ; tmp
+                   )) 
 
 
